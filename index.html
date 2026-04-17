@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My-Relative-Network | เครือข่ายสมาชิกครอบครัว</title>
+    <meta name="description" content="พื้นที่แสดงความสัมพันธ์และกิจกรรมของเครือญาติ My-Relative-Network">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@100..700&family=Inter:wght@100..900&display=swap"
+        rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container nav-content">
+            <div class="logo">
+                <i class="fas fa-network-wired"></i>
+                <span>My Relative Network</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#home" class="active">หน้าหลัก</a></li>
+                <li><a href="#members">สมาชิก</a></li>
+                <li><a href="#activities">กิจกรรม</a></li>
+            </ul>
+            <div class="menu-toggle" id="mobile-menu">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Home Section -->
+    <section id="home" class="hero">
+        <div class="container hero-content">
+            <div class="hero-text">
+                <h1>ความผูกพัน <span class="highlight">เครือญาติครอบครัวเมาะหย๊ะ</span></h1>
+                <p>รวบรวมรายชื่อสมาชิกและภาพกิจกรรมแห่งความทรงจำ เพื่อความสัมพันธ์ที่ยั่งยืน</p>
+                <div class="hero-btns">
+                    <a href="#members" class="btn btn-primary">ดูรายชื่อสมาชิก</a>
+                    <a href="#activities" class="btn btn-secondary">กิจกรรมล่าสุด</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="logo-display">
+                    <i class="fas fa-users-rectangle"></i>
+                    <div class="circle-animation"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Members Section -->
+    <section id="members" class="section">
+        <div class="container">
+            <div class="section-header">
+                <h2>รายชื่อสมาชิกในเครือข่าย</h2>
+                <div class="search-bar">
+                    <input type="text" id="memberSearch" placeholder="ค้นหาตามชื่อหรือรหัส...">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+            <div id="memberList" class="grid-container">
+                <!-- Data will be loaded here -->
+                <div class="loading">กำลังโหลดข้อมูลสมาชิก...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Activities Section -->
+    <section id="activities" class="section alt-bg">
+        <div class="container">
+            <div class="section-header">
+                <h2>ภาพกิจกรรมสัมพันธ์</h2>
+                <p>รวบรวมความประทับใจในทุกการพบปะ</p>
+            </div>
+            <div id="activityList" class="activity-grid">
+                <!-- Data will be loaded here -->
+                <div class="loading">กำลังโหลดข้อมูลกิจกรรม...</div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 My-Relative-Network. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Back to Top Button -->
+    <button id="backToTop" title="Go to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- Script -->
+    <script src="script.js"></script>
+</body>
+
+</html>
