@@ -7,7 +7,7 @@ const SHEET_ID = '1V2vwXcz2sg6zY2lORY9VX1gvJnx114TRbhgARX3vGEI';
 const MEMBER_SHEET_NAME = 'members';
 const ACTIVITY_SHEET_NAME = 'activities';
 // const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyTpaC0zG4BMVkMQR_Ti4jCvVtENoH5VlHpM1UxP6LdDx_bYqU0UnPfca1t8G-C-8d3rQ/exec';
-const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyu4yhyxuzHTnRRSJNww0yltbDvluaVMoQsdYbe_gKsyC6qTZS99Co4L6OfoURLEIw2yw/exec';
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyWS2dTF0hWF4OG3H_Hw8Tguz4nSSqTmbcfSFQAJvnf3CnGUQTdF6l3ir_emf8K3M09zA/exec';
 
 // CORS Proxy — ใช้สำหรับดึงข้อมูลจาก Google Sheets
 const CORS_PROXY = 'https://api.allorigins.win/raw?url=';

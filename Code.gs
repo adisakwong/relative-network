@@ -210,8 +210,8 @@ function handleAddMember(ss, member) {
 
   sheet.appendRow([
     (member.Gener_code    || '').trim(),
-    (member.Fullname      || '').trim(),
     (member.Nickname      || '').trim(),
+    (member.Fullname      || '').trim(),
     (member.Relation_type || '').trim(),
     (member.Address       || '').trim(),
     imageUrl
