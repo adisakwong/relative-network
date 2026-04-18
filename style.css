@@ -253,9 +253,31 @@ body {
     margin: 2rem auto 0;
 }
 
+.search-icon {
+    position: absolute;
+    left: 1.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+}
+
+.clear-search {
+    position: absolute;
+    right: 1.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.clear-search:hover {
+    color: var(--white);
+}
+
 .search-bar input {
     width: 100%;
-    padding: 1rem 1.5rem 1rem 3.5rem;
+    padding: 1rem 3.5rem 1rem 3.5rem; /* added right padding to prevent text overlap with 'x' */
     background: var(--secondary-color);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
@@ -268,14 +290,6 @@ body {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-}
-
-.search-bar i {
-    position: absolute;
-    left: 1.2rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-secondary);
 }
 
 /* Grid Layouts */
@@ -383,6 +397,17 @@ body {
     gap: 8px;
 }
 
+.clickable-code {
+    cursor: pointer;
+    color: var(--accent-light);
+    transition: var(--transition);
+}
+
+.clickable-code:hover {
+    color: var(--white);
+    text-decoration: underline;
+}
+
 /* Activity Grid */
 .activity-grid {
     display: grid;
@@ -441,8 +466,32 @@ body {
     grid-column: 1 / -1;
     text-align: center;
     padding: 4rem;
-    color: var(--text-secondary);
-    font-style: italic;
+    color: var(--accent-light);
+    font-style: normal;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    animation: pulseText 2s infinite ease-in-out;
+}
+
+.loading::before {
+    content: '';
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(59, 130, 246, 0.15);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+}
+
+@keyframes pulseText {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
 }
 
 /* Footer */

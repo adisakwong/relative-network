@@ -32,8 +32,10 @@ relative-network/
 | 📱 Mobile-First Responsive | Bottom-Sheet Modal, Touch-Friendly Inputs, Native Date Picker |
 | 📊 Live Data จาก Google Sheets | ดึงข้อมูลผ่าน Apps Script JSONP (ไม่มี CORS) |
 | 🔒 Admin Dashboard | Login ด้วยรหัสผ่าน, เพิ่มสมาชิก/กิจกรรม |
-| 📸 Drag & Drop / Camera Upload | อัปโหลดรูปไปยัง Google Drive พร้อม Preview |
-| 🔍 Real-time Search | ค้นหาสมาชิกตามชื่อหรือรหัสสมาชิก |
+| 📸 Drag & Drop / Upload | อัปโหลดรูปไปยัง Google Drive พร้อม Preview |
+| 🔍 Advanced Real-time Search | ค้นหาตามชื่อ, รหัสรุ่น, โค้ดครอบครัว, โค้ดบุพการี และที่อยู่ พร้อมปุ่มกากบาทปัดทิ้ง |
+| ✨ Instant Filtering | คลิกที่รหัสครอบครัวบนการ์ด เพื่อเรียกดูสมาชิกในเครือเดียวกันได้ในคลิกเดียว |
+| ⏳ Premium Loading UI | แสดงข้อความและวงแหวนโหลดข้อมูลที่มี Pulse Effect น่าดึงดูดใจ |
 | 🌐 3-Tier Data Fetching | Fallback อัตโนมัติ — ทำงานได้ทุก environment |
 
 ---
@@ -46,7 +48,7 @@ relative-network/
 
 **Sheet: `members`** — หัวตาราง:
 ```
-Gener_code | Nickname | Fullname | Relation_type | Address | Image_URL
+Gener_code | Nickname | Fullname | Relation_type | Address | Image_URL | Family_code | Parent_code
 ```
 
 **Sheet: `activities`** — หัวตาราง:

@@ -382,7 +382,7 @@ function renderMembers(data) {
                 <h3>${member.Fullname}</h3>
                 <span class="relation-tag">${member.Relation_type}</span>
                 <div class="member-meta">
-                    <p><i class="fas fa-fingerprint"></i> ${member.Gener_code}</p>
+                    <p><i class="fas fa-fingerprint"></i> ${member.Gener_code} ${member.Family_code ? '<span class="clickable-code" onclick="applyFilter(\'' + member.Family_code + '\')" title="คลิกเพื่อแสดงครอบครัวนี้">[' + member.Family_code + ']</span>' : ''} ${member.Parent_code ? '[' + member.Parent_code + ']' : ''}</p>
                     <p><i class="fas fa-map-marker-alt"></i> ${member.Address || '-'}</p>
                 </div>
             </div>
@@ -413,15 +413,49 @@ function renderActivities(data) {
 // --- SEARCH ---
 function initSearch() {
     const searchInput = document.getElementById('memberSearch');
+    const clearBtn = document.getElementById('clearSearch');
+
     searchInput.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
+        
+        if (clearBtn) {
+            clearBtn.style.display = term.length > 0 ? 'block' : 'none';
+        }
+
         const filtered = membersData.filter(m =>
             m.Fullname.toLowerCase().includes(term) ||
             m.Nickname.toLowerCase().includes(term) ||
-            m.Gener_code.toLowerCase().includes(term)
+            m.Gener_code.toLowerCase().includes(term) ||
+            (m.Family_code || '').toLowerCase().includes(term) ||
+            (m.Parent_code || '').toLowerCase().includes(term) ||
+            (m.Address || '').toLowerCase().includes(term)
         );
         renderMembers(filtered);
     });
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            clearBtn.style.display = 'none';
+            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+    }
+}
+
+function applyFilter(term) {
+    const searchInput = document.getElementById('memberSearch');
+    if (searchInput) {
+        searchInput.value = term;
+        const event = new Event('input', { bubbles: true });
+        searchInput.dispatchEvent(event);
+
+        const membersSection = document.getElementById('members');
+        if (membersSection) {
+            const yOffset = -80;
+            const y = membersSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+    }
 }
 
 // --- MOCK DATA FOR PREVIEW ---
