@@ -1,0 +1,16 @@
+{
+  "name": "relative-network-website",
+  "version": "1.0.0",
+  "description": "Family member network website with Google Sheets integration",
+  "main": "index.html",
+  "scripts": {
+    "start": "browser-sync start --server --files \"*.html, *.css, *.js\"",
+    "dev": "browser-sync start --server --files \"*.html, *.css, *.js\""
+  },
+  "keywords": [],
+  "author": "Antigravity",
+  "license": "ISC",
+  "devDependencies": {
+    "browser-sync": "^3.0.0"
+  }
+}

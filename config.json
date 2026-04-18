@@ -1,0 +1,15 @@
+{
+  "googleSheets": {
+    "sheetId": "1V2vwXcz2sg6zY2lORY9VX1gvJnx114TRbhgARX3vGEI",
+    "memberSheetName": "members",
+    "activitySheetName": "activities"
+  },
+  "googleAppsScript": {
+    "backendUrl": "https://script.google.com/macros/s/AKfycbyTpaC0zG4BMVkMQR_Ti4jCvVtENoH5VlHpM1UxP6LdDx_bYqU0UnPfca1t8G-C-8d3rQ/exec"
+  },
+  "corsProxy": "https://api.allorigins.win/raw?url=",
+  "driveFolders": {
+    "members": "1EuXqn_5i9ZDwWUCT7oSRVXU8nKBM8E75",
+    "activities": "1K3jcnh_PcyXWfvQwb0ZUuJoFFHZnkMua"
+  }
+}

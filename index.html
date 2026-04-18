@@ -29,6 +29,7 @@
                 <li><a href="#home" class="active">หน้าหลัก</a></li>
                 <li><a href="#members">สมาชิก</a></li>
                 <li><a href="#activities">กิจกรรม</a></li>
+                <li><a href="#" id="adminNavLink"><i class="fas fa-user-shield"></i> ผู้ดูแลระบบ</a></li>
             </ul>
             <div class="menu-toggle" id="mobile-menu">
                 <span class="bar"></span>
@@ -99,6 +100,149 @@
     <button id="backToTop" title="Go to top">
         <i class="fas fa-arrow-up"></i>
     </button>
+
+    <!-- Admin Section Modals -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>เข้าสู่ระบบผู้ดูแลระบบ</h3>
+            <div class="form-group">
+                <label for="adminPassword">รหัสผ่าน</label>
+                <input type="password" id="adminPassword" placeholder="ระบุรหัสผ่าน...">
+            </div>
+            <button id="loginBtn" class="btn btn-primary w-full">เข้าสู่ระบบ</button>
+        </div>
+    </div>
+
+    <div id="adminDashboard" class="modal">
+        <div class="modal-content dashboard-content">
+            <span class="close-modal">&times;</span>
+            <div class="dashboard-header">
+                <h3>ระบบจัดการข้อมูล</h3>
+                <button id="logoutBtn" class="btn btn-danger btn-sm"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</button>
+            </div>
+            
+            <div class="admin-tabs">
+                <button class="tab-btn active" data-tab="addMemberTab">เพิ่มสมาชิก</button>
+                <button class="tab-btn" data-tab="addActivityTab">เพิ่มกิจกรรม</button>
+            </div>
+
+            <div id="addMemberTab" class="tab-content active">
+                <form id="addMemberForm" novalidate>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="generCode">รหัสรุ่น (Gener Code)</label>
+                            <input type="text" id="generCode" name="Gener_code"
+                                   placeholder="เช่น G2-005"
+                                   inputmode="text" autocomplete="off"
+                                   autocorrect="off" autocapitalize="characters"
+                                   required>
+                        </div>
+                        <div class="form-group">
+                            <label for="nickname">ชื่อเล่น</label>
+                            <input type="text" id="nickname" name="Nickname"
+                                   placeholder="ชื่อเล่น"
+                                   inputmode="text" autocomplete="nickname"
+                                   required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="fullname">ชื่อ-นามสกุล</label>
+                        <input type="text" id="fullname" name="Fullname"
+                               placeholder="ชื่อ-นามสกุลจริง"
+                               inputmode="text" autocomplete="name"
+                               required>
+                    </div>
+                    <div class="form-group">
+                        <label for="relation">ความสัมพันธ์</label>
+                        <input type="text" id="relation" name="Relation_type"
+                               placeholder="เช่น บุตรชาย, ภรรยา"
+                               inputmode="text" autocomplete="off"
+                               required>
+                    </div>
+                    <div class="form-group">
+                        <label for="address">ที่อยู่/จังหวัด</label>
+                        <input type="text" id="address" name="Address"
+                               placeholder="ระบุที่อยู่หรือจังหวัด"
+                               inputmode="text" autocomplete="address-level2">
+                    </div>
+                    <div class="form-group">
+                        <label>รูปภาพประจำตัว</label>
+                        <div class="upload-zone" id="memberUploadZone">
+                            <input type="file" name="Image_File" id="memberImageFile"
+                                   accept="image/*" capture="environment">
+                            <i class="fas fa-camera upload-icon"></i>
+                            <p class="upload-label">ถ่ายรูปหรือ <span>เลือกจากคลังภาพ</span></p>
+                            <span class="upload-hint">JPG, PNG, WEBP — บน PC ลากวางได้เลย</span>
+                        </div>
+                        <div class="image-preview-wrap" id="memberPreview">
+                            <button type="button" class="remove-image-btn" id="removeMemberImg" title="ลบรูปภาพ"><i class="fas fa-times"></i></button>
+                            <img id="memberPreviewImg" src="" alt="preview">
+                            <div class="preview-filename" id="memberPreviewName"></div>
+                        </div>
+                        <div class="upload-progress" id="memberUploadProgress">
+                            <div class="progress-label">
+                                <span>กำลังอัปโหลด...</span>
+                                <span id="memberProgressPct">0%</span>
+                            </div>
+                            <div class="progress-bar-track"><div class="progress-bar-fill" id="memberProgressBar"></div></div>
+                        </div>
+                        <small class="form-hint">ปล่อยว่างไว้หากไม่มีรูป</small>
+                    </div>
+                    <button type="submit" id="addMemberSubmitBtn" class="btn btn-primary w-full">
+                        <i class="fas fa-user-plus"></i> บันทึกข้อมูลสมาชิก
+                    </button>
+                </form>
+            </div>
+
+            <div id="addActivityTab" class="tab-content">
+                <form id="addActivityForm" novalidate>
+                    <div class="form-group">
+                        <label for="activityDate">วันที่กิจกรรม</label>
+                        <input type="date" id="activityDate" name="Date_raw"
+                               style="color-scheme: dark;"
+                               required>
+                        <small class="form-hint">เลือกวันที่จากปฏิทิน หรือพิมพ์วันที่เอง</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="activityDesc">รายละเอียดกิจกรรม</label>
+                        <textarea id="activityDesc" name="Description" rows="3"
+                                  placeholder="ระบุรายละเอียดกิจกรรม..."
+                                  inputmode="text" autocorrect="on"
+                                  required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>รูปภาพกิจกรรม</label>
+                        <div class="upload-zone" id="activityUploadZone">
+                            <input type="file" name="Image_Act_File" id="activityImageFile"
+                                   accept="image/*" capture="environment">
+                            <i class="fas fa-camera upload-icon"></i>
+                            <p class="upload-label">ถ่ายรูปหรือ <span>เลือกจากคลังภาพ</span></p>
+                            <span class="upload-hint">JPG, PNG, WEBP — บน PC ลากวางได้เลย</span>
+                        </div>
+                        <div class="image-preview-wrap" id="activityPreview">
+                            <button type="button" class="remove-image-btn" id="removeActivityImg" title="ลบรูปภาพ"><i class="fas fa-times"></i></button>
+                            <img id="activityPreviewImg" src="" alt="preview">
+                            <div class="preview-filename" id="activityPreviewName"></div>
+                        </div>
+                        <div class="upload-progress" id="activityUploadProgress">
+                            <div class="progress-label">
+                                <span>กำลังอัปโหลด...</span>
+                                <span id="activityProgressPct">0%</span>
+                            </div>
+                            <div class="progress-bar-track"><div class="progress-bar-fill" id="activityProgressBar"></div></div>
+                        </div>
+                    </div>
+                    <button type="submit" id="addActivitySubmitBtn" class="btn btn-primary w-full">
+                        <i class="fas fa-calendar-plus"></i> บันทึกข้อมูลกิจกรรม
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
 
     <!-- Script -->
     <script src="script.js"></script>

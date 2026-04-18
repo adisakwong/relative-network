@@ -3,14 +3,29 @@
  */
 
 // --- CONFIGURATION ---
-// Replace this with your Google Sheet ID
 const SHEET_ID = '1V2vwXcz2sg6zY2lORY9VX1gvJnx114TRbhgARX3vGEI';
 const MEMBER_SHEET_NAME = 'members';
 const ACTIVITY_SHEET_NAME = 'activities';
+// const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyTpaC0zG4BMVkMQR_Ti4jCvVtENoH5VlHpM1UxP6LdDx_bYqU0UnPfca1t8G-C-8d3rQ/exec';
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyu4yhyxuzHTnRRSJNww0yltbDvluaVMoQsdYbe_gKsyC6qTZS99Co4L6OfoURLEIw2yw/exec';
+
+// CORS Proxy — ใช้สำหรับดึงข้อมูลจาก Google Sheets
+const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+
+/**
+ * ตรวจว่ากำลังรันบน local environment หรือไม่
+ * (file://, localhost, 127.0.0.1)
+ */
+function isLocalEnv() {
+    const proto = window.location.protocol;
+    const host = window.location.hostname;
+    return proto === 'file:' || host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.');
+}
 
 // Data storage
 let membersData = [];
 let activitiesData = [];
+let adminPassword = ''; // Session storage for current session
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -25,6 +40,10 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         fetchSheetData();
     }
+
+    // Initialize Admin Logic
+    initAdminLogic();
+    initUploadZones();
 });
 
 // --- MOBILE MENU ---
@@ -102,51 +121,195 @@ function initBackToTop() {
 }
 
 // --- DATA FETCHING ---
+/**
+ * ดึงข้อมูลจาก Google Sheets ด้วย 3 วิธี (fallback ตามลำดับ)
+ *
+ * Strategy 1 (Primary) — Apps Script JSONP
+ *   ใช้ BACKEND_URL?action=getMembers&callback=fn
+ *   ✅ ไม่มี CORS เลย ใช้ได้ทุกที่ (file://, localhost, GitHub Pages)
+ *
+ * Strategy 2 (Fallback) — Google Sheets gviz CSV โดยตรง
+ *   ✅ ใช้ได้บน GitHub Pages / server (ถ้า Sheet เปิดสาธารณะ)
+ *   ❌ อาจถูก block บน file://
+ *
+ * Strategy 3 (Last resort) — gviz CSV ผ่าน allorigins.win proxy
+ *   ✅ ใช้ได้บน local ถ้า proxy ยังทำงานได้
+ *   ❌ proxy อาจล่มหรือช้า
+ */
 async function fetchSheetData() {
-    try {
-        console.log("Fetching data from Google Sheets...");
-        // Fetch Members
-        const membersUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${MEMBER_SHEET_NAME}`;
-        const activitiesUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${ACTIVITY_SHEET_NAME}`;
+    console.log('[fetchSheetData] Starting...');
 
-        const [membersRes, activitiesRes] = await Promise.all([
-            fetch(membersUrl),
-            fetch(activitiesUrl)
-        ]);
+    // ลองทีละ strategy จนกว่าจะสำเร็จ
+    const strategies = [
+        { name: 'Apps Script JSONP', fn: fetchViaJsonp },
+        { name: 'Direct gviz CSV', fn: fetchViaDirectCsv },
+        { name: 'Proxy gviz CSV', fn: fetchViaProxyCsv }
+    ];
 
-        if (!membersRes.ok || !activitiesRes.ok) {
-            throw new Error('Network response was not ok');
+    let lastError = null;
+
+    for (const strategy of strategies) {
+        try {
+            console.log('[fetchSheetData] Trying:', strategy.name);
+            await strategy.fn();
+            console.log('[fetchSheetData] ✅ Success via:', strategy.name);
+            // ลบ error banner เก่า (ถ้ามี) เมื่อโหลดสำเร็จ
+            const oldBanner = document.getElementById('fetchErrorBanner');
+            if (oldBanner) oldBanner.remove();
+            return; // สำเร็จแล้ว ออกจาก loop
+        } catch (err) {
+            console.warn('[fetchSheetData] ❌ Failed:', strategy.name, '-', err.message);
+            lastError = { strategy: strategy.name, err };
         }
-
-        const membersCsv = await membersRes.text();
-        const activitiesCsv = await activitiesRes.text();
-
-        membersData = parseCSV(membersCsv);
-        activitiesData = parseCSV(activitiesCsv);
-
-        console.log("Data loaded successfully:", { members: membersData.length, activities: activitiesData.length });
-
-        renderMembers(membersData);
-        renderActivities(activitiesData);
-        initSearch();
-
-    } catch (error) {
-        console.error('Error fetching data:', error);
-        let errorMsg = 'ไม่สามารถโหลดข้อมูลได้';
-        
-        if (window.location.protocol === 'file:') {
-            errorMsg += '<br><small style="font-size: 0.8rem; display: block; margin-top: 10px; color: #f87171;">' + 
-                        '⚠️ การเปิดไฟล์แบบดับเบิลคลิก (file://) อาจถูกบล็อกโดยระบบความปลอดภัยของเบราว์เซอร์ (CORS)<br>' + 
-                        'แนะนำให้อัปโหลดไฟล์ขึ้น GitHub Pages เพื่อใช้งานจริง</small>';
-        } else {
-            errorMsg += '<br><small style="font-size: 0.8rem; display: block; margin-top: 10px;">' + 
-                        'โปรดตรวจสอบความถูกต้องของชื่อ Sheet และการตั้งค่าการแชร์ (Anyone with the link can view)</small>';
-        }
-        
-        document.getElementById('memberList').innerHTML = `<div class="loading">${errorMsg}</div>`;
-        document.getElementById('activityList').innerHTML = `<div class="loading">ไม่สามารถโหลดข้อมูลกิจกรรมได้</div>`;
     }
+
+    // ทุก strategy ล้มเหลว → โหลด mock data และแสดง error banner
+    console.error('[fetchSheetData] All strategies failed. Showing mock data.');
+    loadMockData();
+    showFetchErrorBanner(lastError);
 }
+
+/** Strategy 1: JSONP from Apps Script — ไม่มี CORS เลย */
+function fetchViaJsonp() {
+    return new Promise((resolve, reject) => {
+        if (!BACKEND_URL) return reject(new Error('BACKEND_URL ไม่ได้ตั้งค่า'));
+
+        let resolved = false;
+        const timeout = setTimeout(() => {
+            if (!resolved) reject(new Error('JSONP timeout (10s)'));
+        }, 10000);
+
+        let membersResult = null;
+        let activitiesResult = null;
+
+        function tryFinish() {
+            if (membersResult && activitiesResult) {
+                clearTimeout(timeout);
+                resolved = true;
+
+                if (!membersResult.success) throw new Error('getMembers: ' + membersResult.message);
+                if (!activitiesResult.success) throw new Error('getActivities: ' + activitiesResult.message);
+
+                membersData = membersResult.data || [];
+                activitiesData = activitiesResult.data || [];
+
+                renderMembers(membersData);
+                renderActivities(activitiesData);
+                initSearch();
+                resolve();
+            }
+        }
+
+        // Members
+        const cbMembers = '_gasMembers_' + Date.now();
+        window[cbMembers] = (data) => {
+            membersResult = data;
+            document.getElementById(cbMembers + '_script').remove();
+            delete window[cbMembers];
+            tryFinish();
+        };
+        const sMembers = document.createElement('script');
+        sMembers.id = cbMembers + '_script';
+        sMembers.src = BACKEND_URL + '?action=getMembers&callback=' + cbMembers + '&t=' + Date.now();
+        sMembers.onerror = () => reject(new Error('JSONP script load error (members)'));
+        document.head.appendChild(sMembers);
+
+        // Activities
+        const cbAct = '_gasActivities_' + Date.now();
+        window[cbAct] = (data) => {
+            activitiesResult = data;
+            document.getElementById(cbAct + '_script').remove();
+            delete window[cbAct];
+            tryFinish();
+        };
+        const sAct = document.createElement('script');
+        sAct.id = cbAct + '_script';
+        sAct.src = BACKEND_URL + '?action=getActivities&callback=' + cbAct + '&t=' + Date.now();
+        sAct.onerror = () => reject(new Error('JSONP script load error (activities)'));
+        document.head.appendChild(sAct);
+    });
+}
+
+/** Strategy 2: Direct gviz CSV (ไม่ผ่าน proxy) */
+async function fetchViaDirectCsv() {
+    const t = Date.now();
+    const membersUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${MEMBER_SHEET_NAME}&t=${t}`;
+    const activitiesUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${ACTIVITY_SHEET_NAME}&t=${t}`;
+
+    const [mRes, aRes] = await Promise.all([
+        fetch(membersUrl, { cache: 'no-store' }),
+        fetch(activitiesUrl, { cache: 'no-store' })
+    ]);
+
+    if (!mRes.ok || !aRes.ok) throw new Error(`HTTP error: members=${mRes.status}, activities=${aRes.status}`);
+
+    const membersCsv = await mRes.text();
+    const activitiesCsv = await aRes.text();
+
+    // ถ้า Google ส่ง HTML error กลับมา ให้ throw
+    if (membersCsv.trim().startsWith('<')) throw new Error('Got HTML instead of CSV (sheet may be private)');
+
+    membersData = parseCSV(membersCsv);
+    activitiesData = parseCSV(activitiesCsv);
+
+    renderMembers(membersData);
+    renderActivities(activitiesData);
+    initSearch();
+}
+
+/** Strategy 3: gviz CSV ผ่าน allorigins.win proxy */
+async function fetchViaProxyCsv() {
+    const t = Date.now();
+    const membersUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${MEMBER_SHEET_NAME}&t=${t}`;
+    const activitiesUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${ACTIVITY_SHEET_NAME}&t=${t}`;
+
+    const [mRes, aRes] = await Promise.all([
+        fetch(CORS_PROXY + encodeURIComponent(membersUrl), { cache: 'no-store' }),
+        fetch(CORS_PROXY + encodeURIComponent(activitiesUrl), { cache: 'no-store' })
+    ]);
+
+    if (!mRes.ok || !aRes.ok) throw new Error(`Proxy HTTP error: members=${mRes.status}, activities=${aRes.status}`);
+
+    const membersCsv = await mRes.text();
+    const activitiesCsv = await aRes.text();
+
+    if (membersCsv.trim().startsWith('<')) throw new Error('Got HTML instead of CSV via proxy');
+
+    membersData = parseCSV(membersCsv);
+    activitiesData = parseCSV(activitiesCsv);
+
+    renderMembers(membersData);
+    renderActivities(activitiesData);
+    initSearch();
+}
+
+/** แสดง error banner เมื่อทุก strategy ล้มเหลว */
+function showFetchErrorBanner(lastError) {
+    const old = document.getElementById('fetchErrorBanner');
+    if (old) old.remove();
+
+    const banner = document.createElement('div');
+    banner.id = 'fetchErrorBanner';
+    banner.style.cssText = 'background:rgba(239,68,68,0.1);border:1px solid #ef4444;color:#f87171;padding:16px 20px;border-radius:10px;margin:20px auto;max-width:1200px;text-align:center;';
+
+    const proto = window.location.protocol;
+    let hint = '';
+    if (proto === 'file:') {
+        hint = '⚠️ เปิดด้วย <code>file://</code> — แนะนำใช้ <strong>Live Server</strong> หรือ <code>npm run dev</code> แทน';
+    } else if (!BACKEND_URL) {
+        hint = 'โปรดตั้งค่า <strong>BACKEND_URL</strong> ใน script.js ให้ถูกต้อง';
+    } else {
+        hint = 'ตรวจสอบว่า Google Sheet <strong>แชร์แบบสาธารณะ</strong> และ Apps Script <strong>Deploy แล้ว</strong>';
+    }
+
+    banner.innerHTML = `
+        <strong>⚠️ ไม่สามารถเชื่อมต่อข้อมูลได้ (กำลังแสดงข้อมูลจำลอง)</strong>
+        <br><small style="display:block;margin-top:6px;opacity:0.8;">${hint}</small>
+        ${lastError ? `<small style="display:block;margin-top:4px;opacity:0.5;">Last error: ${lastError.strategy} — ${lastError.err.message}</small>` : ''}
+    `;
+    document.querySelector('.hero').after(banner);
+}
+
 
 // Robust CSV Parser
 function parseCSV(csvText) {
@@ -176,7 +339,7 @@ function parseLine(line) {
         const char = line[i];
         if (char === '"') {
             if (inQuote && line[i + 1] === '"') {
-                cur += '"'; 
+                cur += '"';
                 i++;
             } else {
                 inQuote = !inQuote;
@@ -192,6 +355,17 @@ function parseLine(line) {
     return result;
 }
 
+// Helper to reliably find Image URL regardless of capitalization in Google Sheet
+function parseImageUrl(obj) {
+    if (!obj) return null;
+    for (const key in obj) {
+        if (key.toLowerCase().includes('image') && typeof obj[key] === 'string' && obj[key].startsWith('http')) {
+            return obj[key];
+        }
+    }
+    return null;
+}
+
 // --- RENDERING ---
 function renderMembers(data) {
     const container = document.getElementById('memberList');
@@ -202,7 +376,7 @@ function renderMembers(data) {
 
     container.innerHTML = data.map(member => `
         <div class="member-card">
-            <img src="${member.Image_URL || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=500'}" alt="${member.Fullname}" class="member-img">
+            <img src="${parseImageUrl(member) || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=500'}" alt="${member.Fullname}" class="member-img">
             <div class="member-info">
                 <span class="nickname">${member.Nickname || 'Unknown'}</span>
                 <h3>${member.Fullname}</h3>
@@ -226,7 +400,7 @@ function renderActivities(data) {
     container.innerHTML = data.map(act => `
         <div class="activity-card">
             <div class="activity-img-container">
-                <img src="${act.Image_act_URL || 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=800'}" alt="activity" class="activity-img">
+                <img src="${parseImageUrl(act) || 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=800'}" alt="activity" class="activity-img">
             </div>
             <div class="activity-body">
                 <span class="activity-date">${act.Date}</span>
@@ -268,4 +442,399 @@ function loadMockData() {
     renderMembers(membersData);
     renderActivities(activitiesData);
     initSearch();
+}
+
+// --- ADMIN SYSTEM LOGIC ---
+function initAdminLogic() {
+    const adminNavLink = document.getElementById('adminNavLink');
+    const loginModal = document.getElementById('loginModal');
+    const adminDashboard = document.getElementById('adminDashboard');
+    const closeModals = document.querySelectorAll('.close-modal');
+    const loginBtn = document.getElementById('loginBtn');
+    const adminPasswordInput = document.getElementById('adminPassword');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    // Modal Control
+    adminNavLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (adminPassword) {
+            adminDashboard.classList.add('show');
+        } else {
+            loginModal.classList.add('show');
+        }
+    });
+
+    closeModals.forEach(btn => {
+        btn.addEventListener('click', () => {
+            loginModal.classList.remove('show');
+            adminDashboard.classList.remove('show');
+        });
+    });
+
+    // Login Action
+    loginBtn.addEventListener('click', async () => {
+        const password = adminPasswordInput.value;
+        if (!password) {
+            showToast('โปรดระบุรหัสผ่าน', 'error');
+            return;
+        }
+
+        if (!BACKEND_URL) {
+            showToast('โปรดตั้งค่า BACKEND_URL ใน script.js ก่อนใช้งานระบบหลังบ้าน', 'error');
+            return;
+        }
+
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'กำลังตรวจสอบ...';
+
+        try {
+            const res = await gasPost({ action: 'login', adminPassword: password });
+            const result = await res.json();
+
+            if (result.success) {
+                adminPassword = password;
+                loginModal.classList.remove('show');
+                adminDashboard.classList.add('show');
+                adminPasswordInput.value = '';
+                showToast('เข้าสู่ระบบสำเร็จ ยินดีต้อนรับ!', 'success');
+            } else {
+                showToast(result.message || 'รหัสผ่านไม่ถูกต้อง', 'error');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ หรือคุณยังไม่ได้ตั้งค่า CORS/Deployment ใน Apps Script', 'error');
+        } finally {
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'เข้าสู่ระบบ';
+        }
+    });
+
+    // Tab Switching
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.getAttribute('data-tab');
+
+            tabBtns.forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            btn.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', () => {
+        adminPassword = '';
+        adminDashboard.classList.remove('show');
+    });
+
+    // Form Submissions
+    document.getElementById('addMemberForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const member = Object.fromEntries(formData.entries());
+
+        // Handle image file
+        const fileInput = document.getElementById('memberImageFile');
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            // Validate file size (5 MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('ไฟล์รูปภาพขนาดใหญ่เกินไป (สูงสุด 5 MB)', 'error');
+                return;
+            }
+            showUploadProgress('member', true);
+            animateProgress('member', 0, 60);
+            const base64 = await fileToBase64(file);
+            member.imageFile = {
+                base64: base64,
+                type: file.type,
+                name: file.name
+            };
+            animateProgress('member', 60, 80);
+        }
+
+        await submitAdminAction('addMember', { member }, 'member');
+        form.reset();
+        clearImagePreview('member');
+    });
+
+    document.getElementById('addActivityForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const activity = Object.fromEntries(formData.entries());
+
+        // แปลงวันที่จาก input[type=date] (YYYY-MM-DD) เป็นภาษาไทย
+        if (activity.Date_raw) {
+            try {
+                const d = new Date(activity.Date_raw + 'T00:00:00');
+                activity.Date = d.toLocaleDateString('th-TH', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            } catch (_) {
+                activity.Date = activity.Date_raw;
+            }
+            delete activity.Date_raw;
+        } else {
+            activity.Date = new Date().toLocaleDateString('th-TH', {
+                year: 'numeric', month: 'short', day: 'numeric'
+            });
+        }
+
+        // Handle image file
+        const fileInput = document.getElementById('activityImageFile');
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            // Validate file size (5 MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('ไฟล์รูปภาพขนาดใหญ่เกินไป (สูงสุด 5 MB)', 'error');
+                return;
+            }
+            showUploadProgress('activity', true);
+            animateProgress('activity', 0, 60);
+            const base64 = await fileToBase64(file);
+            activity.imageFile = {
+                base64: base64,
+                type: file.type,
+                name: file.name
+            };
+            animateProgress('activity', 60, 80);
+        }
+
+        await submitAdminAction('addActivity', { activity }, 'activity');
+        form.reset();
+        clearImagePreview('activity');
+    });
+}
+
+// Helper to convert File to Base64
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
+
+async function submitAdminAction(action, data, progressKey) {
+    if (!adminPassword || !BACKEND_URL) return;
+
+    const submitBtnId = action === 'addMember' ? 'addMemberSubmitBtn' : 'addActivitySubmitBtn';
+    const btn = document.getElementById(submitBtnId);
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.classList.add('btn-loading');
+    btn.textContent = 'กำลังบันทึก...';
+
+    try {
+        if (progressKey) animateProgress(progressKey, 80, 95);
+
+        const response = await gasPost({
+            action: action,
+            adminPassword: adminPassword,
+            ...data
+        });
+        const result = await response.json();
+
+        if (progressKey) {
+            animateProgress(progressKey, 95, 100);
+            setTimeout(() => showUploadProgress(progressKey, false), 1000);
+        }
+
+        if (result.success) {
+            showToast(result.message, 'success');
+            fetchSheetData();
+        } else {
+            showToast('ล้มเหลว: ' + result.message, 'error');
+            if (progressKey) showUploadProgress(progressKey, false);
+        }
+    } catch (error) {
+        console.error('Action error:', error);
+        showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error');
+        if (progressKey) showUploadProgress(progressKey, false);
+    } finally {
+        btn.disabled = false;
+        btn.classList.remove('btn-loading');
+        btn.textContent = originalText;
+    }
+}
+
+/**
+ * gasPost — ส่ง POST ไปยัง Google Apps Script
+ * • บน server (GitHub Pages): ส่งตรงพร้อม Content-Type: text/plain
+ *   เพื่อหลีกเลี่ยง CORS preflight
+ * • บน local (file://, localhost): ใช้ allorigins.win proxy เพื่อ wrap request
+ *   เพราะ browser บาง version ยัง block แม้ไม่มี preflight
+ */
+async function gasPost(payload) {
+    const bodyStr = JSON.stringify(payload);
+
+    if (isLocalEnv()) {
+        // Local: ส่งผ่าน allorigins proxy (wraps POST → GET)
+        // สำหรับ payload ที่มีรูปภาพ (base64) อาจใหญ่ — ลองตรงก่อน
+        console.log('[gasPost] Local env detected, trying direct then proxy...');
+        try {
+            return await fetch(BACKEND_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                redirect: 'follow',
+                body: bodyStr
+            });
+        } catch (directErr) {
+            console.warn('[gasPost] Direct failed, using proxy:', directErr);
+            // Fallback: ใช้ proxy
+            const proxyUrl = CORS_PROXY + encodeURIComponent(BACKEND_URL);
+            return await fetch(proxyUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: bodyStr
+            });
+        }
+    }
+
+    // Server (GitHub Pages): ส่งตรง
+    return await fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        redirect: 'follow',
+        body: bodyStr
+    });
+}
+
+// --- UPLOAD ZONE LOGIC ---
+function initUploadZones() {
+    setupUploadZone('member', 'memberUploadZone', 'memberImageFile', 'memberPreview', 'memberPreviewImg', 'memberPreviewName', 'removeMemberImg');
+    setupUploadZone('activity', 'activityUploadZone', 'activityImageFile', 'activityPreview', 'activityPreviewImg', 'activityPreviewName', 'removeActivityImg');
+}
+
+function setupUploadZone(key, zoneId, fileInputId, previewWrapId, previewImgId, previewNameId, removeBtnId) {
+    const zone = document.getElementById(zoneId);
+    const fileInput = document.getElementById(fileInputId);
+    const previewWrap = document.getElementById(previewWrapId);
+    const previewImg = document.getElementById(previewImgId);
+    const previewName = document.getElementById(previewNameId);
+    const removeBtn = document.getElementById(removeBtnId);
+
+    if (!zone || !fileInput) return;
+
+    // File selected via click
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) handleFileSelected(file, previewWrap, previewImg, previewName);
+    });
+
+    // Drag & Drop
+    zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.classList.add('dragover');
+    });
+
+    zone.addEventListener('dragleave', () => {
+        zone.classList.remove('dragover');
+    });
+
+    zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            // Sync to actual input
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            fileInput.files = dt.files;
+            handleFileSelected(file, previewWrap, previewImg, previewName);
+        } else if (file) {
+            showToast('โปรดเลือกไฟล์รูปภาพเท่านั้น', 'error');
+        }
+    });
+
+    // Remove button
+    if (removeBtn) {
+        removeBtn.addEventListener('click', () => {
+            fileInput.value = '';
+            clearImagePreview(key);
+        });
+    }
+}
+
+function handleFileSelected(file, previewWrap, previewImg, previewName) {
+    // Validate size (5 MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('ไฟล์ขนาดใหญ่เกินไป (สูงสุด 5 MB)', 'error');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        previewImg.src = ev.target.result;
+        previewName.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        previewWrap.classList.add('has-image');
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearImagePreview(key) {
+    const previewWrap = document.getElementById(key + 'Preview');
+    const previewImg = document.getElementById(key + 'PreviewImg');
+    const previewName = document.getElementById(key + 'PreviewName');
+    if (previewWrap) previewWrap.classList.remove('has-image');
+    if (previewImg) previewImg.src = '';
+    if (previewName) previewName.textContent = '';
+    showUploadProgress(key, false);
+}
+
+function showUploadProgress(key, show) {
+    const bar = document.getElementById(key + 'UploadProgress');
+    if (!bar) return;
+    if (show) {
+        bar.classList.add('show');
+        setProgressValue(key, 0);
+    } else {
+        setTimeout(() => {
+            bar.classList.remove('show');
+            setProgressValue(key, 0);
+        }, 400);
+    }
+}
+
+function setProgressValue(key, pct) {
+    const fill = document.getElementById(key + 'ProgressBar');
+    const label = document.getElementById(key + 'ProgressPct');
+    if (fill) fill.style.width = pct + '%';
+    if (label) label.textContent = pct + '%';
+}
+
+function animateProgress(key, from, to) {
+    let current = from;
+    const step = (to - from) / 20;
+    const interval = setInterval(() => {
+        current = Math.min(current + step, to);
+        setProgressValue(key, Math.round(current));
+        if (current >= to) clearInterval(interval);
+    }, 30);
+}
+
+// --- TOAST NOTIFICATIONS ---
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<span class="toast-icon">${icons[type] || 'ℹ️'}</span><span>${message}</span>`;
+    container.appendChild(toast);
+
+    // Auto-dismiss after 4 seconds
+    setTimeout(() => {
+        toast.style.animation = 'toastOut 0.4s ease forwards';
+        setTimeout(() => toast.remove(), 400);
+    }, 4000);
 }
