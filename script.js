@@ -723,6 +723,13 @@ function setupUploadZone(key, zoneId, fileInputId, previewWrapId, previewImgId, 
 
     if (!zone || !fileInput) return;
 
+    // Explicit zone click fallback for some mobile browsers
+    zone.addEventListener('click', (e) => {
+        if (e.target !== fileInput) {
+            fileInput.click();
+        }
+    });
+
     // File selected via click
     fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
