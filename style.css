@@ -408,6 +408,30 @@ body {
     text-decoration: underline;
 }
 
+.btn-family-filter {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--accent-light);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+    width: fit-content;
+}
+
+.btn-family-filter:hover {
+    background: rgba(59, 130, 246, 0.25);
+    color: var(--white);
+    border-color: rgba(59, 130, 246, 0.6);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
 /* Activity Grid */
 .activity-grid {
     display: grid;

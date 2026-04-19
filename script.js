@@ -7,7 +7,8 @@ const SHEET_ID = '1V2vwXcz2sg6zY2lORY9VX1gvJnx114TRbhgARX3vGEI';
 const MEMBER_SHEET_NAME = 'members';
 const ACTIVITY_SHEET_NAME = 'activities';
 // const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyTpaC0zG4BMVkMQR_Ti4jCvVtENoH5VlHpM1UxP6LdDx_bYqU0UnPfca1t8G-C-8d3rQ/exec';
-const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyWS2dTF0hWF4OG3H_Hw8Tguz4nSSqTmbcfSFQAJvnf3CnGUQTdF6l3ir_emf8K3M09zA/exec';
+// const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyWS2dTF0hWF4OG3H_Hw8Tguz4nSSqTmbcfSFQAJvnf3CnGUQTdF6l3ir_emf8K3M09zA/exec';
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxR5wM-MXDtSFJqW2cmdgVD6FOsLpwesmc-9Kx6omilHkmgREIRcK6KsvwTNCiSP9RaJQ/exec';
 
 // CORS Proxy — ใช้สำหรับดึงข้อมูลจาก Google Sheets
 const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
@@ -382,7 +383,10 @@ function renderMembers(data) {
                 <h3>${member.Fullname}</h3>
                 <span class="relation-tag">${member.Relation_type}</span>
                 <div class="member-meta">
-                    <p><i class="fas fa-fingerprint"></i> ${member.Gener_code} ${member.Family_code ? '<span class="clickable-code" onclick="applyFilter(\'' + member.Family_code + '\')" title="คลิกเพื่อแสดงครอบครัวนี้">[' + member.Family_code + ']</span>' : ''} ${member.Parent_code ? '[' + member.Parent_code + ']' : ''}</p>
+                    <p style="flex-wrap: wrap;">
+                        <i class="fas fa-fingerprint"></i> ${member.Gener_code} ${member.Parent_code ? '[' + member.Parent_code + ']' : ''}
+                        ${member.Family_code ? `<button type="button" class="btn-family-filter" onclick="applyFilter('${member.Family_code}')"><i class="fas fa-users"></i> บุคคลในครอบครัว</button>` : ''}
+                    </p>
                     <p><i class="fas fa-map-marker-alt"></i> ${member.Address || '-'}</p>
                 </div>
             </div>
@@ -417,7 +421,7 @@ function initSearch() {
 
     searchInput.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
-        
+
         if (clearBtn) {
             clearBtn.style.display = term.length > 0 ? 'block' : 'none';
         }

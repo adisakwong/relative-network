@@ -208,14 +208,57 @@ function handleAddMember(ss, member) {
   const sheet = ss.getSheetByName(CONFIG.SHEET_NAME_MEMBERS);
   if (!sheet) return createResponse(false, 'ไม่พบ sheet "' + CONFIG.SHEET_NAME_MEMBERS + '"');
 
-  sheet.appendRow([
-    (member.Gener_code    || '').trim(),
-    (member.Nickname      || '').trim(),
-    (member.Fullname      || '').trim(),
-    (member.Relation_type || '').trim(),
-    (member.Address       || '').trim(),
-    imageUrl
-  ]);
+  const numCols = sheet.getLastColumn();
+  let rowData = [];
+  
+  if (numCols > 0) {
+    const headers = sheet.getRange(1, 1, 1, numCols).getValues()[0].map(h => String(h).trim());
+    rowData = new Array(headers.length).fill('');
+    
+    const mapData = {
+      'Gener_code': member.Gener_code,
+      'Nickname': member.Nickname,
+      'Fullname': member.Fullname,
+      'Relation_type': member.Relation_type,
+      'Address': member.Address,
+      'Image_URL': imageUrl,
+      'Family_code': member.Family_code,
+      'Parent_code': member.Parent_code
+    };
+    
+    headers.forEach((h, i) => {
+      const key = Object.keys(mapData).find(k => k.toLowerCase() === h.toLowerCase());
+      if (key && mapData[key] !== undefined && mapData[key] !== null) {
+        rowData[i] = String(mapData[key]).trim();
+      }
+    });
+
+    if (headers[0] === '') {
+      rowData = [
+        (member.Gener_code    || '').trim(),
+        (member.Nickname      || '').trim(),
+        (member.Fullname      || '').trim(),
+        (member.Relation_type || '').trim(),
+        (member.Address       || '').trim(),
+        imageUrl,
+        (member.Family_code   || '').trim(),
+        (member.Parent_code   || '').trim()
+      ];
+    }
+  } else {
+    rowData = [
+      (member.Gener_code    || '').trim(),
+      (member.Nickname      || '').trim(),
+      (member.Fullname      || '').trim(),
+      (member.Relation_type || '').trim(),
+      (member.Address       || '').trim(),
+      imageUrl,
+      (member.Family_code   || '').trim(),
+      (member.Parent_code   || '').trim()
+    ];
+  }
+
+  sheet.appendRow(rowData);
 
   Logger.log('[handleAddMember] Row added: ' + (member.Fullname || ''));
   return createResponse(true, 'เพิ่มรายชื่อสมาชิก "' + (member.Nickname || member.Fullname) + '" เรียบร้อยแล้ว');

@@ -34,7 +34,8 @@ relative-network/
 | 🔒 Admin Dashboard | Login ด้วยรหัสผ่าน, เพิ่มสมาชิก/กิจกรรม |
 | 📸 Drag & Drop / Upload | อัปโหลดรูปไปยัง Google Drive พร้อม Preview |
 | 🔍 Advanced Real-time Search | ค้นหาตามชื่อ, รหัสรุ่น, โค้ดครอบครัว, โค้ดบุพการี และที่อยู่ พร้อมปุ่มกากบาทปัดทิ้ง |
-| ✨ Instant Filtering | คลิกที่รหัสครอบครัวบนการ์ด เพื่อเรียกดูสมาชิกในเครือเดียวกันได้ในคลิกเดียว |
+| ✨ Instant Filtering | กดปุ่ม "บุคคลในครอบครัว" บนการ์ด เพื่อเรียกดูสมาชิกในเครือเดียวกันได้ในคลิกเดียว |
+| 👨‍👩‍👧 Family Tracking | จัดเก็บความสัมพันธ์อย่างเป็นระบบด้วยรหัสครอบครัว (Family_code) และรหัสบิดา (Parent_code) |
 | ⏳ Premium Loading UI | แสดงข้อความและวงแหวนโหลดข้อมูลที่มี Pulse Effect น่าดึงดูดใจ |
 | 🌐 3-Tier Data Fetching | Fallback อัตโนมัติ — ทำงานได้ทุก environment |
 
@@ -46,7 +47,7 @@ relative-network/
 
 สร้าง Google Sheet และตั้งชื่อ Tab ดังนี้:
 
-**Sheet: `members`** — หัวตาราง:
+**Sheet: `members`** — หัวตาราง (ระบบจะตรวจจับตามชื่อคอลัมน์ สลับตำแหน่งได้):
 ```
 Gener_code | Nickname | Fullname | Relation_type | Address | Image_URL | Family_code | Parent_code
 ```
