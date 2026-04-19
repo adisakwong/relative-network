@@ -340,15 +340,17 @@ body {
 }
 
 .relation-tag {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    background: rgba(59, 130, 246, 0.15);
-    color: var(--accent-light);
-    border-radius: 6px;
-    font-size: 0.8rem;
-    margin-bottom: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
     font-weight: 500;
-    width: fit-content;
+}
+
+.relation-tag i {
+    color: var(--accent-light);
+    font-size: 0.85rem;
 }
 
 /* Back to Top */

@@ -381,11 +381,13 @@ function renderMembers(data) {
             <div class="member-info">
                 <span class="nickname">${member.Nickname || 'Unknown'}</span>
                 <h3>${member.Fullname}</h3>
-                <span class="relation-tag">${member.Relation_type}</span>
+                <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 1rem;">
+                    <span class="relation-tag"><i class="fas fa-sitemap"></i> ${member.Relation_type}</span>
+                    ${member.Family_code ? `<button type="button" class="btn-family-filter" onclick="applyFilter('${member.Family_code}')"><i class="fas fa-users"></i> บุคคลในครอบครัว</button>` : ''}
+                </div>
                 <div class="member-meta">
                     <p style="flex-wrap: wrap;">
                         <i class="fas fa-fingerprint"></i> ${member.Gener_code} ${member.Parent_code ? '[' + member.Parent_code + ']' : ''}
-                        ${member.Family_code ? `<button type="button" class="btn-family-filter" onclick="applyFilter('${member.Family_code}')"><i class="fas fa-users"></i> บุคคลในครอบครัว</button>` : ''}
                     </p>
                     <p><i class="fas fa-map-marker-alt"></i> ${member.Address || '-'}</p>
                 </div>
