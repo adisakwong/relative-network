@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relative-Network | เครือญาติครอบครัวเมาะยะ</title>
+    <title>Relative-Network | เครือญาติ</title>
     <meta name="description" content="พื้นที่แสดงความสัมพันธ์และกิจกรรมของเครือญาติ My-Relative-Network">
     <link rel="manifest" href="manifest.json">
     <!-- Google Fonts -->
@@ -65,9 +65,11 @@
             <div class="section-header">
                 <h2>สมาชิกในเครือญาติ</h2>
                 <div class="search-bar">
-                    <input type="text" id="memberSearch" placeholder="ค้นหาตามชื่อ รหัสรุ่น (G1, G2...) ที่อยู่ หรือความสัมพันธ์...">
+                    <input type="text" id="memberSearch"
+                        placeholder="ค้นหาตามรหัสรุ่น(G1...) ชื่อ ที่อยู่ หรือความสัมพันธ์...">
                     <i class="fas fa-search search-icon"></i>
-                    <i class="fas fa-times clear-search" id="clearSearch" title="ล้างการค้นหา" style="display: none;"></i>
+                    <i class="fas fa-times clear-search" id="clearSearch" title="ล้างการค้นหา"
+                        style="display: none;"></i>
                 </div>
             </div>
             <div id="memberList" class="grid-container">
@@ -127,6 +129,7 @@
             <div class="admin-tabs">
                 <button class="tab-btn active" data-tab="addMemberTab">เพิ่มสมาชิก</button>
                 <button class="tab-btn" data-tab="addActivityTab">เพิ่มกิจกรรม</button>
+                <button class="tab-btn" data-tab="editMemberTab">แก้ไขข้อมูลสมาชิก</button>
             </div>
 
             <div id="addMemberTab" class="tab-content active">
@@ -235,13 +238,85 @@
                                 <span>กำลังอัปโหลด...</span>
                                 <span id="activityProgressPct">0%</span>
                             </div>
-                            <div class="progress-bar-track">
+                            <div class="progress-bar-track:">
                                 <div class="progress-bar-fill" id="activityProgressBar"></div>
                             </div>
                         </div>
                     </div>
                     <button type="submit" id="addActivitySubmitBtn" class="btn btn-primary w-full">
                         <i class="fas fa-calendar-plus"></i> บันทึกข้อมูลกิจกรรม
+                    </button>
+                </form>
+            </div>
+
+            <div id="editMemberTab" class="tab-content">
+                <div class="form-group">
+                    <label for="selectEditMember">เลือกสมาชิกที่ต้องการแก้ไข</label>
+                    <select id="selectEditMember" class="form-control">
+                        <option value="">-- โปรดเลือกสมาชิก --</option>
+                    </select>
+                </div>
+
+                <form id="editMemberForm" style="display: none;" novalidate>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="editGenerCode">รหัสรุ่น (Gener Code) <span style="color: #ef4444;">*แก้ไขไม่ได้</span></label>
+                            <input type="text" id="editGenerCode" name="Gener_code" readonly style="background: rgba(255,255,255,0.05); color: #94a3b8;">
+                        </div>
+                        <div class="form-group">
+                            <label for="editNickname">ชื่อเล่น</label>
+                            <input type="text" id="editNickname" name="Nickname" placeholder="ชื่อเล่น" required>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="editFamilyCode">รหัสหัวหน้าครอบครัว</label>
+                            <input type="text" id="editFamilyCode" name="Family_code" placeholder="เช่น G1-001">
+                        </div>
+                        <div class="form-group">
+                            <label for="editParentCode">รหัสบิดา</label>
+                            <input type="text" id="editParentCode" name="Parent_code" placeholder="เช่น G1-001">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editFullname">ชื่อ-นามสกุล</label>
+                        <input type="text" id="editFullname" name="Fullname" placeholder="ชื่อ-นามสกุลจริง" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editRelation">ความสัมพันธ์</label>
+                        <input type="text" id="editRelation" name="Relation_type" placeholder="เช่น บุตรชาย, ภรรยา" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editAddress">ที่อยู่/จังหวัด</label>
+                        <input type="text" id="editAddress" name="Address" placeholder="ระบุที่อยู่หรือจังหวัด">
+                    </div>
+                    <div class="form-group">
+                        <label>รูปภาพประจำตัว (อัปโหลดใหม่เพื่อเปลี่ยน)</label>
+                        <div class="upload-zone" id="editMemberUploadZone">
+                            <input type="file" name="Image_File" id="editMemberImageFile"
+                                accept="image/jpeg, image/png, image/webp, image/*">
+                            <i class="fas fa-camera upload-icon"></i>
+                            <p class="upload-label">ถ่ายรูปหรือ <span>เลือกจากคลังภาพ</span></p>
+                            <span class="upload-hint">ปล่อยว่างไว้หากไม่ต้องการเปลี่ยนรูป</span>
+                        </div>
+                        <div class="image-preview-wrap" id="editMemberPreview">
+                            <button type="button" class="remove-image-btn" id="removeEditMemberImg" title="ลบรูปภาพ"><i
+                                    class="fas fa-times"></i></button>
+                            <img id="editMemberPreviewImg" src="" alt="preview">
+                            <div class="preview-filename" id="editMemberPreviewName"></div>
+                        </div>
+                        <div class="upload-progress" id="editMemberUploadProgress">
+                            <div class="progress-label">
+                                <span>กำลังอัปโหลด...</span>
+                                <span id="editMemberProgressPct">0%</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div class="progress-bar-fill" id="editMemberProgressBar"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" id="editMemberSubmitBtn" class="btn btn-primary w-full">
+                        <i class="fas fa-save"></i> บันทึกการแก้ไข
                     </button>
                 </form>
             </div>

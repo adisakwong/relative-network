@@ -59,6 +59,10 @@ function doPost(e) {
       return handleAddActivity(ss, data.activity);
     }
 
+    if (action === 'updateMember') {
+      return handleUpdateMember(ss, data.member);
+    }
+
     return createResponse(false, 'ไม่พบ action: ' + action);
 
   } catch (err) {
@@ -262,6 +266,86 @@ function handleAddMember(ss, member) {
 
   Logger.log('[handleAddMember] Row added: ' + (member.Fullname || ''));
   return createResponse(true, 'เพิ่มรายชื่อสมาชิก "' + (member.Nickname || member.Fullname) + '" เรียบร้อยแล้ว');
+}
+
+// ─────────────────────────────────────────────
+// Update Member
+// ─────────────────────────────────────────────
+function handleUpdateMember(ss, member) {
+  if (!member || !member.Gener_code) return createResponse(false, 'ไม่มีข้อมูลสมาชิก หรือขาด Gener_code');
+
+  const sheet = ss.getSheetByName(CONFIG.SHEET_NAME_MEMBERS);
+  if (!sheet) return createResponse(false, 'ไม่พบ sheet "' + CONFIG.SHEET_NAME_MEMBERS + '"');
+
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  if (lastRow < 2) return createResponse(false, 'ไม่พบข้อมูลสมาชิกในระบบ');
+
+  const dataRange = sheet.getRange(1, 1, lastRow, lastCol);
+  const values = dataRange.getValues();
+  const headers = values[0].map(h => String(h).trim());
+
+  const generCodeIdx = headers.indexOf('Gener_code');
+  if (generCodeIdx === -1) return createResponse(false, 'ไม่พบหัวข้อ Gener_code ในชีต');
+
+  let rowIndex = -1;
+  for (let i = 1; i < values.length; i++) {
+    if (String(values[i][generCodeIdx]).trim() === String(member.Gener_code).trim()) {
+      rowIndex = i + 1; // row is 1-indexed
+      break;
+    }
+  }
+
+  if (rowIndex === -1) return createResponse(false, 'ไม่พบสมาชิกที่มีรหัส: ' + member.Gener_code);
+
+  let imageUrl = (member.Image_URL || '').trim();
+  // ถ้ามี URL เดิมอยู่แล้ว แต่ไม่ได้ส่งมาใน Image_URL ใหม่ ให้ใช้ค่าเดิม (กันกรณีไม่ได้แก้รูป)
+  if (!imageUrl) {
+    const imageUrlIdx = headers.findIndex(h => h.toLowerCase() === 'image_url');
+    if (imageUrlIdx !== -1) {
+      imageUrl = values[rowIndex - 1][imageUrlIdx];
+    }
+  }
+
+  // อัปโหลดรูปภาพใหม่ (ถ้ามี)
+  if (member.imageFile && member.imageFile.base64) {
+    try {
+      validateImageFile(member.imageFile);
+      const ext      = getExtension(member.imageFile.type);
+      const fileName = 'member_' + sanitizeName(member.Nickname || member.Fullname) + '_' + Date.now() + ext;
+      imageUrl = saveFileToDrive(member.imageFile.base64, CONFIG.FOLDER_ID_MEMBERS, fileName, member.imageFile.type);
+      Logger.log('[handleUpdateMember] New image uploaded: ' + imageUrl);
+    } catch (err) {
+      Logger.log('[handleUpdateMember] Image upload failed: ' + err.toString());
+      return createResponse(false, 'อัปโหลดรูปภาพล้มเหลว: ' + err.message);
+    }
+  }
+
+  const mapData = {
+    'Gener_code': member.Gener_code,
+    'Nickname': member.Nickname,
+    'Fullname': member.Fullname,
+    'Relation_type': member.Relation_type,
+    'Address': member.Address,
+    'Image_URL': imageUrl,
+    'Family_code': member.Family_code,
+    'Parent_code': member.Parent_code
+  };
+
+  const updateValues = [];
+  headers.forEach((h, i) => {
+    const key = Object.keys(mapData).find(k => k.toLowerCase() === h.toLowerCase());
+    if (key && mapData[key] !== undefined && mapData[key] !== null) {
+      updateValues.push(String(mapData[key]).trim());
+    } else {
+      updateValues.push(values[rowIndex - 1][i]); // Keep existing value for other columns
+    }
+  });
+
+  sheet.getRange(rowIndex, 1, 1, headers.length).setValues([updateValues]);
+
+  Logger.log('[handleUpdateMember] Row updated: ' + (member.Fullname || ''));
+  return createResponse(true, 'แก้ไขข้อมูลสมาชิก "' + (member.Nickname || member.Fullname) + '" เรียบร้อยแล้ว');
 }
 
 // ─────────────────────────────────────────────

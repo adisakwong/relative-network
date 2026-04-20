@@ -8,7 +8,8 @@ const MEMBER_SHEET_NAME = 'members';
 const ACTIVITY_SHEET_NAME = 'activities';
 // const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyTpaC0zG4BMVkMQR_Ti4jCvVtENoH5VlHpM1UxP6LdDx_bYqU0UnPfca1t8G-C-8d3rQ/exec';
 // const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyWS2dTF0hWF4OG3H_Hw8Tguz4nSSqTmbcfSFQAJvnf3CnGUQTdF6l3ir_emf8K3M09zA/exec';
-const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxR5wM-MXDtSFJqW2cmdgVD6FOsLpwesmc-9Kx6omilHkmgREIRcK6KsvwTNCiSP9RaJQ/exec';
+// const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxR5wM-MXDtSFJqW2cmdgVD6FOsLpwesmc-9Kx6omilHkmgREIRcK6KsvwTNCiSP9RaJQ/exec';
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwJ7u60qjoyxGG8TAmIMUdjaTzVtTeXyAk_scG6tTjJS0Z8WCaE8TUOLV6fJwS_cwSPnw/exec';
 
 // CORS Proxy — ใช้สำหรับดึงข้อมูลจาก Google Sheets
 const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
@@ -194,9 +195,10 @@ function fetchViaJsonp() {
                 membersData = membersResult.data || [];
                 activitiesData = activitiesResult.data || [];
 
-renderMembers(membersData);
-    renderActivities(activitiesData);
-    initSearch();
+                renderMembers(membersData);
+                renderActivities(activitiesData);
+                updateEditMemberDropdown();
+                initSearch();
                 resolve();
             }
         }
@@ -251,10 +253,11 @@ async function fetchViaDirectCsv() {
     if (membersCsv.trim().startsWith('<')) throw new Error('Got HTML instead of CSV (sheet may be private)');
 
     membersData = parseCSV(membersCsv);
-activitiesData = parseCSV(activitiesCsv);
+    activitiesData = parseCSV(activitiesCsv);
 
     renderMembers(membersData);
     renderActivities(activitiesData);
+    updateEditMemberDropdown();
     initSearch();
 }
 
@@ -281,6 +284,7 @@ async function fetchViaProxyCsv() {
 
     renderMembers(membersData);
     renderActivities(activitiesData);
+    updateEditMemberDropdown();
     initSearch();
 }
 
@@ -309,6 +313,49 @@ function showFetchErrorBanner(lastError) {
         ${lastError ? `<small style="display:block;margin-top:4px;opacity:0.5;">Last error: ${lastError.strategy} — ${lastError.err.message}</small>` : ''}
     `;
     document.querySelector('.hero').after(banner);
+}
+
+/** อัปเดตรายชื่อใน dropdown สำหรับแก้ไข */
+function updateEditMemberDropdown() {
+    const select = document.getElementById('selectEditMember');
+    if (!select) return;
+
+    // เก็บค่าที่เลือกไว้เดิม (ถ้ามี)
+    const currentValue = select.value;
+
+    select.innerHTML = '<option value="">-- โปรดเลือกสมาชิก --</option>';
+
+    // เรียงตาม Gener_code
+    const sortedMembers = [...membersData].sort((a, b) => {
+        const codeA = String(a.Gener_code || '');
+        const codeB = String(b.Gener_code || '');
+        return codeA.localeCompare(codeB, undefined, { numeric: true, sensitivity: 'base' });
+    });
+
+    sortedMembers.forEach(m => {
+        const option = document.createElement('option');
+        option.value = m.Gener_code;
+        option.textContent = `[${m.Gener_code}] ${m.Nickname || ''} - ${m.Fullname}`;
+        select.appendChild(option);
+    });
+
+    // คืนค่าที่เลือกไว้เดิม
+    if (currentValue) {
+        const memberExists = membersData.some(m => m.Gener_code === currentValue);
+        if (memberExists) {
+            select.value = currentValue;
+            // ถ้าฟอร์มเปิดอยู่ ให้รีเฟรชข้อมูลในฟอร์มด้วย
+            const editForm = document.getElementById('editMemberForm');
+            if (editForm && editForm.style.display !== 'none') {
+                const event = new Event('change');
+                select.dispatchEvent(event);
+            }
+        } else {
+            const editForm = document.getElementById('editMemberForm');
+            if (editForm) editForm.style.display = 'none';
+            select.value = '';
+        }
+    }
 }
 
 
@@ -439,7 +486,7 @@ function initSearch() {
 
 function applyFilters() {
     const searchTerm = document.getElementById('memberSearch').value.toLowerCase();
-    
+
     const genMatch = searchTerm.match(/g(\d+)/);
     const genFilter = genMatch ? 'G' + genMatch[1] : null;
 
@@ -492,6 +539,7 @@ function loadMockData() {
 
     renderMembers(membersData);
     renderActivities(activitiesData);
+    updateEditMemberDropdown();
     initSearch();
 }
 
@@ -661,6 +709,103 @@ function initAdminLogic() {
         form.reset();
         clearImagePreview('activity');
     });
+
+    // Edit Member Selection
+    const selectEditMember = document.getElementById('selectEditMember');
+    const editMemberForm = document.getElementById('editMemberForm');
+
+    selectEditMember.addEventListener('change', () => {
+        const generCode = selectEditMember.value;
+        if (!generCode) {
+            editMemberForm.style.display = 'none';
+            return;
+        }
+
+        const member = membersData.find(m => m.Gener_code === generCode);
+        if (member) {
+            document.getElementById('editGenerCode').value = member.Gener_code;
+            document.getElementById('editNickname').value = member.Nickname || '';
+            document.getElementById('editFullname').value = member.Fullname || '';
+            document.getElementById('editFamilyCode').value = member.Family_code || '';
+            document.getElementById('editParentCode').value = member.Parent_code || '';
+            document.getElementById('editRelation').value = member.Relation_type || '';
+            document.getElementById('editAddress').value = member.Address || '';
+
+            // Preview current image if exists
+            const currentImgUrl = parseImageUrl(member);
+            const previewWrap = document.getElementById('editMemberPreview');
+            const previewImg = document.getElementById('editMemberPreviewImg');
+            const previewName = document.getElementById('editMemberPreviewName');
+
+            if (currentImgUrl) {
+                previewImg.src = currentImgUrl;
+                previewName.textContent = 'รูปปัจจุบัน';
+                previewWrap.classList.add('has-image');
+            } else {
+                previewWrap.classList.remove('has-image');
+            }
+
+            editMemberForm.style.display = 'block';
+        }
+    });
+
+    // Custom Remove behavior for Edit Form
+    document.getElementById('removeEditMemberImg').addEventListener('click', (e) => {
+        // หยุด event เดิมของ setupUploadZone (ถ้ามี) หรือประมวลผลต่อ
+        const fileInput = document.getElementById('editMemberImageFile');
+        fileInput.value = '';
+        
+        // กลับไปเช็คว่าสมาชิกคนนี้มีรูปเดิมไหม
+        const generCode = selectEditMember.value;
+        const member = membersData.find(m => m.Gener_code === generCode);
+        const currentImgUrl = member ? parseImageUrl(member) : null;
+        
+        const previewWrap = document.getElementById('editMemberPreview');
+        const previewImg = document.getElementById('editMemberPreviewImg');
+        const previewName = document.getElementById('editMemberPreviewName');
+        
+        if (currentImgUrl) {
+            previewImg.src = currentImgUrl;
+            previewName.textContent = 'รูปปัจจุบัน';
+            previewWrap.classList.add('has-image');
+        } else {
+            previewWrap.classList.remove('has-image');
+        }
+        
+        // ป้องกัน setupUploadZone ทำงานซ้ำ (ถ้าใส่ listener แยกไว้)
+        e.stopPropagation();
+    });
+
+    // Edit Member Submission
+    editMemberForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const member = Object.fromEntries(formData.entries());
+
+        // Handle image file
+        const fileInput = document.getElementById('editMemberImageFile');
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('ไฟล์รูปภาพขนาดใหญ่เกินไป (สูงสุด 5 MB)', 'error');
+                return;
+            }
+            showUploadProgress('editMember', true);
+            animateProgress('editMember', 0, 60);
+            const base64 = await fileToBase64(file);
+            member.imageFile = {
+                base64: base64,
+                type: file.type,
+                name: file.name
+            };
+            animateProgress('editMember', 60, 80);
+        }
+
+        await submitAdminAction('updateMember', { member }, 'editMember');
+        // Don't reset form fully yet, just refresh data
+        // fetchSheetData() is called inside submitAdminAction
+    });
 }
 
 // Helper to convert File to Base64
@@ -676,7 +821,8 @@ function fileToBase64(file) {
 async function submitAdminAction(action, data, progressKey) {
     if (!adminPassword || !BACKEND_URL) return;
 
-    const submitBtnId = action === 'addMember' ? 'addMemberSubmitBtn' : 'addActivitySubmitBtn';
+    const submitBtnId = action === 'addMember' ? 'addMemberSubmitBtn' :
+        action === 'addActivity' ? 'addActivitySubmitBtn' : 'editMemberSubmitBtn';
     const btn = document.getElementById(submitBtnId);
     const originalText = btn.textContent;
     btn.disabled = true;
@@ -762,6 +908,7 @@ async function gasPost(payload) {
 function initUploadZones() {
     setupUploadZone('member', 'memberUploadZone', 'memberImageFile', 'memberPreview', 'memberPreviewImg', 'memberPreviewName', 'removeMemberImg');
     setupUploadZone('activity', 'activityUploadZone', 'activityImageFile', 'activityPreview', 'activityPreviewImg', 'activityPreviewName', 'removeActivityImg');
+    setupUploadZone('editMember', 'editMemberUploadZone', 'editMemberImageFile', 'editMemberPreview', 'editMemberPreviewImg', 'editMemberPreviewName', 'removeEditMemberImg');
 }
 
 function setupUploadZone(key, zoneId, fileInputId, previewWrapId, previewImgId, previewNameId, removeBtnId) {
