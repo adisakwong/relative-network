@@ -194,9 +194,9 @@ function fetchViaJsonp() {
                 membersData = membersResult.data || [];
                 activitiesData = activitiesResult.data || [];
 
-                renderMembers(membersData);
-                renderActivities(activitiesData);
-                initSearch();
+renderMembers(membersData);
+    renderActivities(activitiesData);
+    initSearch();
                 resolve();
             }
         }
@@ -251,7 +251,7 @@ async function fetchViaDirectCsv() {
     if (membersCsv.trim().startsWith('<')) throw new Error('Got HTML instead of CSV (sheet may be private)');
 
     membersData = parseCSV(membersCsv);
-    activitiesData = parseCSV(activitiesCsv);
+activitiesData = parseCSV(activitiesCsv);
 
     renderMembers(membersData);
     renderActivities(activitiesData);
@@ -421,31 +421,42 @@ function initSearch() {
     const searchInput = document.getElementById('memberSearch');
     const clearBtn = document.getElementById('clearSearch');
 
-    searchInput.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-
+    searchInput.addEventListener('input', () => {
         if (clearBtn) {
-            clearBtn.style.display = term.length > 0 ? 'block' : 'none';
+            clearBtn.style.display = searchInput.value.length > 0 ? 'block' : 'none';
         }
-
-        const filtered = membersData.filter(m =>
-            m.Fullname.toLowerCase().includes(term) ||
-            m.Nickname.toLowerCase().includes(term) ||
-            m.Gener_code.toLowerCase().includes(term) ||
-            (m.Family_code || '').toLowerCase().includes(term) ||
-            (m.Parent_code || '').toLowerCase().includes(term) ||
-            (m.Address || '').toLowerCase().includes(term)
-        );
-        renderMembers(filtered);
+        applyFilters();
     });
 
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
             searchInput.value = '';
             clearBtn.style.display = 'none';
-            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+            applyFilters();
         });
     }
+}
+
+function applyFilters() {
+    const searchTerm = document.getElementById('memberSearch').value.toLowerCase();
+    
+    const genMatch = searchTerm.match(/g(\d+)/);
+    const genFilter = genMatch ? 'G' + genMatch[1] : null;
+
+    const filtered = membersData.filter(m => {
+        const matchSearch = m.Fullname.toLowerCase().includes(searchTerm) ||
+            m.Nickname.toLowerCase().includes(searchTerm) ||
+            m.Gener_code.toLowerCase().includes(searchTerm) ||
+            (m.Family_code || '').toLowerCase().includes(searchTerm) ||
+            (m.Parent_code || '').toLowerCase().includes(searchTerm) ||
+            (m.Address || '').toLowerCase().includes(searchTerm) ||
+            (m.Relation_type || '').toLowerCase().includes(searchTerm);
+
+        const matchGen = !genFilter || m.Gener_code.startsWith(genFilter);
+
+        return matchSearch && matchGen;
+    });
+    renderMembers(filtered);
 }
 
 function applyFilter(term) {
