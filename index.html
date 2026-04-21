@@ -64,12 +64,25 @@
         <div class="container">
             <div class="section-header">
                 <h2>สมาชิกในเครือญาติ</h2>
-                <div class="search-bar">
-                    <input type="text" id="memberSearch"
-                        placeholder="ค้นหาตามรหัสรุ่น(G1...) ชื่อ ที่อยู่ หรือความสัมพันธ์...">
-                    <i class="fas fa-search search-icon"></i>
-                    <i class="fas fa-times clear-search" id="clearSearch" title="ล้างการค้นหา"
-                        style="display: none;"></i>
+                <div class="search-container">
+                    <div class="search-bar">
+                        <input type="text" id="memberSearch"
+                            placeholder="ค้นหาชื่อเล่น ชื่อ-นามสกุล ที่อยู่ หรือความสัมพันธ์...">
+                        <i class="fas fa-search search-icon"></i>
+                        <i class="fas fa-times clear-search" id="clearSearch" title="ล้างการค้นหา"
+                            style="display: none;"></i>
+                    </div>
+                    <div class="filter-dropdown">
+                        <select id="personGenFilter">
+                            <option value="">ทั้งหมด</option>
+                            <option value="PG1">รุ่นแรก</option>
+                            <option value="PG2">รุ่นลูก</option>
+                            <option value="PG3">รุ่นหลาน</option>
+                            <option value="PG4">รุ่นเหลน</option>
+                            <option value="PG5">รุ่นโหลน</option>
+                        </select>
+                        <i class="fas fa-chevron-down dropdown-icon"></i>
+                    </div>
                 </div>
             </div>
             <div id="memberList" class="grid-container">
@@ -157,6 +170,18 @@
                             <label for="parentCode">รหัสบิดา</label>
                             <input type="text" id="parentCode" name="Parent_code" placeholder="เช่น G1-001"
                                 inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="characters">
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="personGen">ลำดับในรุ่น (Person Gen)</label>
+                            <input type="text" id="personGen" name="Person_gen" placeholder="เช่น PG1" inputmode="text"
+                                autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label for="headFamily">รหัสสายหลัก (Head Family)</label>
+                            <input type="text" id="headFamily" name="Head_family" placeholder="เช่น G1-001"
+                                inputmode="text" autocomplete="off">
                         </div>
                     </div>
                     <div class="form-group">
@@ -260,8 +285,10 @@
                 <form id="editMemberForm" style="display: none;" novalidate>
                     <div class="grid-2">
                         <div class="form-group">
-                            <label for="editGenerCode">รหัสรุ่น (Gener Code) <span style="color: #ef4444;">*แก้ไขไม่ได้</span></label>
-                            <input type="text" id="editGenerCode" name="Gener_code" readonly style="background: rgba(255,255,255,0.05); color: #94a3b8;">
+                            <label for="editGenerCode">รหัสรุ่น (Gener Code) <span
+                                    style="color: #ef4444;">*แก้ไขไม่ได้</span></label>
+                            <input type="text" id="editGenerCode" name="Gener_code" readonly
+                                style="background: rgba(255,255,255,0.05); color: #94a3b8;">
                         </div>
                         <div class="form-group">
                             <label for="editNickname">ชื่อเล่น</label>
@@ -278,13 +305,24 @@
                             <input type="text" id="editParentCode" name="Parent_code" placeholder="เช่น G1-001">
                         </div>
                     </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="editPersonGen">ลำดับในรุ่น (Person Gen)</label>
+                            <input type="text" id="editPersonGen" name="Person_gen" placeholder="เช่น PG1">
+                        </div>
+                        <div class="form-group">
+                            <label for="editHeadFamily">รหัสสายหลัก (Head Family)</label>
+                            <input type="text" id="editHeadFamily" name="Head_family" placeholder="เช่น G1-001">
+                        </div>
+                    </div>
                     <div class="form-group">
                         <label for="editFullname">ชื่อ-นามสกุล</label>
                         <input type="text" id="editFullname" name="Fullname" placeholder="ชื่อ-นามสกุลจริง" required>
                     </div>
                     <div class="form-group">
                         <label for="editRelation">ความสัมพันธ์</label>
-                        <input type="text" id="editRelation" name="Relation_type" placeholder="เช่น บุตรชาย, ภรรยา" required>
+                        <input type="text" id="editRelation" name="Relation_type" placeholder="เช่น บุตรชาย, ภรรยา"
+                            required>
                     </div>
                     <div class="form-group">
                         <label for="editAddress">ที่อยู่/จังหวัด</label>

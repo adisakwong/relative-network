@@ -29,6 +29,10 @@ let membersData = [];
 let activitiesData = [];
 let adminPassword = ''; // Session storage for current session
 
+// Filter state
+let activeFamilyCode = '';
+let activeParentCode = '';
+
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     initMobileMenu();
@@ -196,6 +200,7 @@ function fetchViaJsonp() {
                 activitiesData = activitiesResult.data || [];
 
                 renderMembers(membersData);
+                updateDropdownCounts(membersData);
                 renderActivities(activitiesData);
                 updateEditMemberDropdown();
                 initSearch();
@@ -360,6 +365,31 @@ function updateEditMemberDropdown() {
 
 
 // Robust CSV Parser
+function updateDropdownCounts(data) {
+    const filterSelect = document.getElementById('personGenFilter');
+    if (!filterSelect || !data) return;
+
+    // Loop through all options and update their text with matching counts
+    Array.from(filterSelect.options).forEach(option => {
+        const val = option.value;
+        // Get clean text without previous counts if any
+        let baseText = option.getAttribute('data-base-text');
+        if (!baseText) {
+            baseText = option.textContent.split(' (')[0].trim();
+            option.setAttribute('data-base-text', baseText);
+        }
+
+        let count = 0;
+        if (val === "") {
+            count = data.length;
+        } else {
+            count = data.filter(m => (m.Person_gen || '').trim() === val).length;
+        }
+        
+        option.textContent = `${baseText} (${count})`;
+    });
+}
+
 function parseCSV(csvText) {
     const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== '');
     if (lines.length === 0) return [];
@@ -418,7 +448,11 @@ function parseImageUrl(obj) {
 function renderMembers(data) {
     const container = document.getElementById('memberList');
     if (!data || data.length === 0) {
-        container.innerHTML = '<div class="loading">ไม่พบข้อมูลสมาชิก</div>';
+        container.innerHTML = `
+            <div class="no-results">
+                <i class="fas fa-search"></i>
+                <p>ไม่พบข้อมูลสมาชิกที่ค้นหา</p>
+            </div>`;
         return;
     }
 
@@ -430,11 +464,15 @@ function renderMembers(data) {
                 <h3>${member.Fullname}</h3>
                 <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 1rem;">
                     <span class="relation-tag"><i class="fas fa-sitemap"></i> ${member.Relation_type}</span>
-                    ${member.Family_code ? `<button type="button" class="btn-family-filter" onclick="applyFilter('${member.Family_code}')"><i class="fas fa-users"></i> บุคคลในครอบครัว</button>` : ''}
+                    ${member.Family_code ? `
+                    <button type="button" class="btn-family-filter ${member.Head_family === '1' ? 'btn-family-dark' : ''}" onclick="applyFilter('${member.Family_code}', '${member.Gener_code}')">
+                        <i class="fas fa-users"></i> บุคคลในครอบครัว
+                    </button>` : ''}
                 </div>
                 <div class="member-meta">
                     <p style="flex-wrap: wrap;">
-                        <i class="fas fa-fingerprint"></i> ${member.Gener_code} ${member.Parent_code ? '[' + member.Parent_code + ']' : ''}
+                        <i class="fas fa-fingerprint"></i> 
+                        ${member.Gener_code}${member.Parent_code ? ` [${member.Parent_code}]` : ''}${member.Person_gen ? ` [${member.Person_gen}]` : ''}${member.Head_family ? ` [${member.Head_family}]` : ''}
                     </p>
                     <p><i class="fas fa-map-marker-alt"></i> ${member.Address || '-'}</p>
                 </div>
@@ -446,7 +484,11 @@ function renderMembers(data) {
 function renderActivities(data) {
     const container = document.getElementById('activityList');
     if (!data || data.length === 0) {
-        container.innerHTML = '<div class="loading">ไม่พบข้อมูลกิจกรรม</div>';
+        container.innerHTML = `
+            <div class="no-results">
+                <i class="fas fa-calendar-times"></i>
+                <p>ไม่พบข้อมูลกิจกรรม</p>
+            </div>`;
         return;
     }
 
@@ -470,49 +512,101 @@ function initSearch() {
 
     searchInput.addEventListener('input', () => {
         if (clearBtn) {
-            clearBtn.style.display = searchInput.value.length > 0 ? 'block' : 'none';
+            clearBtn.style.display = searchInput.value.length > 0 ? 'flex' : 'none';
         }
+        // applyFilters() now handles resetting state if search doesn't match active filter
         applyFilters();
     });
 
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
             searchInput.value = '';
+            activeFamilyCode = '';
+            activeParentCode = '';
             clearBtn.style.display = 'none';
+            applyFilters();
+        });
+    }
+
+    // Dropdown filter listener
+    const genFilterSelect = document.getElementById('personGenFilter');
+    if (genFilterSelect) {
+        genFilterSelect.addEventListener('change', () => {
             applyFilters();
         });
     }
 }
 
 function applyFilters() {
-    const searchTerm = document.getElementById('memberSearch').value.toLowerCase();
+    const searchInput = document.getElementById('memberSearch');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const dropdownGen = document.getElementById('personGenFilter').value;
 
-    const genMatch = searchTerm.match(/g(\d+)/);
-    const genFilter = genMatch ? 'G' + genMatch[1] : null;
+    // Reset family/parent filter if user manually changed the search box to something else
+    if (activeFamilyCode && searchTerm !== activeFamilyCode.toLowerCase()) {
+        activeFamilyCode = '';
+        activeParentCode = '';
+    }
 
     const filtered = membersData.filter(m => {
-        const matchSearch = m.Fullname.toLowerCase().includes(searchTerm) ||
-            m.Nickname.toLowerCase().includes(searchTerm) ||
-            m.Gener_code.toLowerCase().includes(searchTerm) ||
-            (m.Family_code || '').toLowerCase().includes(searchTerm) ||
-            (m.Parent_code || '').toLowerCase().includes(searchTerm) ||
-            (m.Address || '').toLowerCase().includes(searchTerm) ||
-            (m.Relation_type || '').toLowerCase().includes(searchTerm);
+        const fullname = (m.Fullname || '').toLowerCase();
+        const nickname = (m.Nickname || '').toLowerCase();
+        const personGen = (m.Person_gen || '').toLowerCase();
+        const headFamily = (m.Head_family || '').toLowerCase();
+        const address = (m.Address || '').toLowerCase();
+        const relation = (m.Relation_type || '').toLowerCase();
 
-        const matchGen = !genFilter || m.Gener_code.startsWith(genFilter);
+        // We exclude searching by the family code in general search to keep results clean, 
+        // unless it was explicitly set by the family button
+        const matchSearch = (searchTerm === '' || searchTerm === (activeFamilyCode || '').toLowerCase()) || 
+            fullname.includes(searchTerm) ||
+            nickname.includes(searchTerm) ||
+            headFamily.includes(searchTerm) ||
+            address.includes(searchTerm) ||
+            relation.includes(searchTerm);
 
-        return matchSearch && matchGen;
+        const matchGenDropdown = !dropdownGen || (m.Person_gen === dropdownGen);
+        
+        // Family & Parent filter from button (Spouse and Children)
+        let matchFamilyBtn = true;
+        if (activeFamilyCode) {
+            const mFam = (m.Family_code || '').trim();
+            const mPar = (m.Parent_code || '').trim();
+            const mGen = (m.Gener_code || '').trim();
+            
+            // Shows people in same Family_code (Spouse/Self)
+            // OR people having this person as Parent (Children)
+            matchFamilyBtn = (mFam === activeFamilyCode || mPar === activeParentCode);
+        }
+
+        return matchSearch && matchGenDropdown && matchFamilyBtn;
     });
     renderMembers(filtered);
 }
 
-function applyFilter(term) {
+function applyFilter(fCode, gCode) {
+    activeFamilyCode = fCode ? fCode.trim() : '';
+    activeParentCode = gCode ? gCode.trim() : ''; 
+
     const searchInput = document.getElementById('memberSearch');
     if (searchInput) {
-        searchInput.value = term;
-        const event = new Event('input', { bubbles: true });
-        searchInput.dispatchEvent(event);
+        searchInput.value = activeFamilyCode; // Show the code in search box
+        
+        // Ensure clear button is visible
+        const clearBtn = document.getElementById('clearSearch');
+        if (clearBtn) {
+            clearBtn.style.display = searchInput.value.length > 0 ? 'flex' : 'none';
+        }
+        
+        // Reset dropdown filter 
+        const genFilterSelect = document.getElementById('personGenFilter');
+        if (genFilterSelect) {
+            genFilterSelect.value = '';
+        }
 
+        applyFilters();
+        
+        // Scroll to members section
         const membersSection = document.getElementById('members');
         if (membersSection) {
             const yOffset = -80;
@@ -521,6 +615,7 @@ function applyFilter(term) {
         }
     }
 }
+
 
 // --- MOCK DATA FOR PREVIEW ---
 function loadMockData() {
@@ -728,6 +823,8 @@ function initAdminLogic() {
             document.getElementById('editFullname').value = member.Fullname || '';
             document.getElementById('editFamilyCode').value = member.Family_code || '';
             document.getElementById('editParentCode').value = member.Parent_code || '';
+            document.getElementById('editPersonGen').value = member.Person_gen || '';
+            document.getElementById('editHeadFamily').value = member.Head_family || '';
             document.getElementById('editRelation').value = member.Relation_type || '';
             document.getElementById('editAddress').value = member.Address || '';
 

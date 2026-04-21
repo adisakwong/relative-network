@@ -1,7 +1,7 @@
 # Relative-Network 🌐
 
 เว็บไซต์เครือข่ายสมาชิกครอบครัวและคลังภาพกิจกรรมสัมพันธ์  
-พัฒนาด้วย HTML, CSS, JavaScript (Vanilla) — ไม่ต้องพึ่ง Framework ใดๆ
+พัฒนาด้วย HTML, CSS, JavaScript (Vanilla) — เน้นความเร็ว สวยงาม และรองรับการใช้งานบนมือถืออย่างสมบูรณ์
 
 ---
 
@@ -10,178 +10,78 @@
 ```
 relative-network/
 ├── index.html        ← หน้าเว็บหลัก (UI + Admin Dashboard)
-├── style.css         ← สไตล์ทั้งหมด (Dark Theme, Responsive, Mobile)
-├── script.js         ← ตรรกะฝั่ง Frontend (Data Fetching, Admin, Upload)
-├── Code.gs           ← Google Apps Script Backend (อัปโหลดไว้ใน GAS เท่านั้น)
-├── manifest.json     ← PWA Manifest
-├── config.json       ← ค่าคอนฟิกสำหรับ Local Dev Server
-├── package.json      ← npm scripts (สำหรับรัน Local Server)
-└── img/
-    └── mobile_icon.png ← App Icon สำหรับ PWA / Bookmark
+├── style.css         ← สไตล์ทั้งหมด (Dark Theme, Glassmorphism, Responsive)
+├── script.js         ← ตรรกะฝั่ง Frontend (Filtering, Search, Admin Logic)
+├── Code.gs           ← Google Apps Script Backend (สำหรับจัดการข้อมูลและอัปโหลดรูป)
+├── manifest.json     ← PWA Manifest สำหรับติดตั้งบนมือถือ
+├── package.json      ← สำหรับการรัน Local Dev Server
+└── img/              ← ไอคอนและทรัพยากรภาพ
 ```
 
-> **หมายเหตุ**: `Code.gs` ไม่ต้องอัปโหลดขึ้น GitHub — ให้ copy วางใน Google Apps Script Editor เท่านั้น
+> **หมายเหตุ**: ไฟล์ `Code.gs` ใช้สำหรับติดตั้งภายใน Google Apps Script เท่านั้น ไม่ต้องอัปโหลดขึ้นเว็บโฮสติ้ง
 
 ---
 
-## คุณสมบัติ (Features)
+## คุณสมบัติเด่น (Key Features)
 
 | ฟีเจอร์ | รายละเอียด |
 |---|---|
-| 🎨 Dark Blue Premium Theme | ดีไซน์ทันสมัย ใช้ Glassmorphism + Gradient |
-| 📱 Mobile-First Responsive | Bottom-Sheet Modal, Touch-Friendly Inputs, Native Date Picker |
-| 📊 Live Data จาก Google Sheets | ดึงข้อมูลผ่าน Apps Script JSONP (ไม่มี CORS) |
-| 🔒 Admin Dashboard | Login ด้วยรหัสผ่าน, เพิ่มสมาชิก/กิจกรรม |
-| 📸 Drag & Drop / Upload | อัปโหลดรูปไปยัง Google Drive พร้อม Preview |
-| 🔍 Advanced Real-time Search | ค้นหาตามชื่อ, รหัสรุ่น, โค้ดครอบครัว, โค้ดบุพการี และที่อยู่ พร้อมปุ่มกากบาทปัดทิ้ง |
-| ✨ Instant Filtering | กดปุ่ม "บุคคลในครอบครัว" บนการ์ด เพื่อเรียกดูสมาชิกในเครือเดียวกันได้ในคลิกเดียว |
-| 👨‍👩‍👧 Family Tracking | จัดเก็บความสัมพันธ์อย่างเป็นระบบด้วยรหัสครอบครัว (Family_code) และรหัสบิดา (Parent_code) |
-| 🛠️ Full Admin Update | แก้ไขข้อมูลสมาชิกเดิมได้ทันที พร้อมเปลี่ยนรูปภาพโดยใช้ Gener_code เป็นหลัก |
-| 👁️ Live Image Preview | ระบบพรีวิวรูปภาพแบบเรียลไทม์ ทั้งตอนเลือกรูปใหม่และดูรูปปัจจุบันของสมาชิก |
-| ⏳ Premium Loading UI | แสดงข้อความและวงแหวนโหลดข้อมูลที่มี Pulse Effect น่าดึงดูดใจ |
-| 🌐 3-Tier Data Fetching | Fallback อัตโนมัติ — ทำงานได้ทุก environment |
+| 🎨 **Premium Aesthetics** | ดีไซน์ Dark Mode ทันสมัยด้วย Glassmorphism, Gradients และ Micro-animations |
+| 📊 **Real-time Statistics** | ระบบนับจำนวนสมาชิกแยกตามรุ่น (Generations) แสดงผลใน Dropdown โดยอัตโนมัติ |
+| 🔍 **Advanced Filtering** | ระบบกรองรุ่น (PG1-PG5) พร้อมการค้นหาชื่อ-ที่อยู่ ที่แม่นยำและลื่นไหล |
+| 👨‍👩‍👧‍👦 **Smart Family View** | ปุ่ม "บุคคลในครอบครัว" ที่แสดงเฉพาะ [ตนเอง + คู่สมรส + ลูกๆ] เพื่อความกระชับ |
+| 🛡️ **Admin Control Panel** | ระบบเพิ่ม/แก้ไขสมาชิกและกิจกรรม ความปลอดภัยด้วยรหัสผ่าน และ UI ที่จัดการง่าย |
+| 📸 **Cloud Photo Storage** | อัปโหลดรูปภาพผ่าน Google Drive พร้อมระบบ Live Preview ก่อนบันทึก |
+| 📱 **Mobile Optimized** | ออกแบบมาเพื่อมือถือโดยเฉพาะ ทั้ง Bottom-Sheet และปุ่มกดขนาดใหญ่ที่แตะง่าย |
+| ⚡ **No-Reload Logic** | การค้นหาและกรองข้อมูลทำงานทันทีบนเบราว์เซอร์ ไม่ต้องโหลดหน้าใหม่ |
 
 ---
 
-## การตั้งค่าเริ่มต้น (Setup)
+## การเตรียมฐานข้อมูล (Google Sheets Setup)
 
-### 1. เตรียม Google Sheet
+สร้าง Google Sheet และตั้งชื่อ Tab ตามที่กำหนด (หัวตารางต้องตรงกัน):
 
-สร้าง Google Sheet และตั้งชื่อ Tab ดังนี้:
+### 1. Sheet: `members` (ข้อมูลสมาชิก)
+หัวตารางที่ต้องมี:
+`Gener_code` | `Nickname` | `Fullname` | `Relation_type` | `Address` | `Image_URL` | `Family_code` | `Parent_code` | `Person_gen` | `Head_family`
 
-**Sheet: `members`** — หัวตาราง (ระบบจะตรวจจับตามชื่อคอลัมน์ สลับตำแหน่งได้):
-```
-Gener_code | Nickname | Fullname | Relation_type | Address | Image_URL | Family_code | Parent_code
-```
+- **Person_gen**: ระบุรุ่น เช่น PG1, PG2 (สำหรับตัวกรองในหน้าเว็บ)
+- **Head_family**: ใส่ค่า `1` หากเป็นสายหลัก (ปุ่มครอบครัวจะเป็นสีเน้นพิเศษ)
 
-**Sheet: `activities`** — หัวตาราง:
-```
-Date | Description | Image_act_URL
-```
+### 2. Sheet: `activities` (ภาพกิจกรรม)
+หัวตาราง: `Date` | `Description` | `Image_act_URL`
 
-**Sheet: `admin`** — หัวตาราง:
-```
-password
-(รหัสผ่าน Admin แถวที่ 2 เป็นต้นไป)
-```
-
-จากนั้น **Share** → "Anyone with the link" → **Viewer**
+### 3. Sheet: `admin` (รหัสผ่าน)
+หัวตาราง: `password` (รหัสผ่านจะอ่านจากแถวที่ 2 เป็นต้นไป)
 
 ---
 
-### 2. ตั้งค่า Google Apps Script Backend
+## การติดตั้งและการใช้งาน (Setup Guide)
 
-1. เปิด [script.google.com](https://script.google.com) → สร้าง Project ใหม่
-2. Copy โค้ดจาก `Code.gs` ไปวางในไฟล์ `Code.gs` ของ Apps Script
-3. แก้ไข `FOLDER_ID_MEMBERS` และ `FOLDER_ID_ACTIVITIES` ให้ตรงกับโฟลเดอร์ใน Google Drive ของคุณ:
-   ```javascript
-   const CONFIG = {
-     FOLDER_ID_MEMBERS:    'YOUR_MEMBERS_FOLDER_ID',
-     FOLDER_ID_ACTIVITIES: 'YOUR_ACTIVITIES_FOLDER_ID',
-   };
-   ```
-4. **Deploy** → **New Deployment**
-   - Type: **Web app**
-   - Execute as: **Me**
-   - Who has access: **Anyone**
-5. คัดลอก URL ที่ได้ (ลงท้ายด้วย `/exec`)
+### 1. ตั้งค่า Backend
+1. คัดลอกโค้ดจาก `Code.gs` ไปวางใน [Google Apps Script](https://script.google.com)
+2. แก้ไข `FOLDER_ID` ใน `CONFIG` ให้เป็น ID โฟลเดอร์ Google Drive ของคุณ
+3. สั่ง **Deploy as Web App** (ตั้งค่าเป็น Anyone counts access) แล้วคัดลอก URL ที่ได้
 
----
-
-### 3. ตั้งค่า `script.js`
-
-เปิดไฟล์ `script.js` แล้วแก้ไขตัวแปรใน `--- CONFIGURATION ---`:
-
+### 2. ตั้งค่า Frontend
+เปิดไฟล์ `script.js` และแก้ไขส่วนกอนฟิก:
 ```javascript
-const SHEET_ID    = 'YOUR_GOOGLE_SHEET_ID';   // ID จาก URL ของ Google Sheet
-const BACKEND_URL = 'YOUR_GAS_WEB_APP_URL';   // URL จาก Deploy
+const SHEET_ID    = 'YOUR_SHEET_ID';
+const BACKEND_URL = 'YOUR_APP_SCRIPT_URL';
 ```
 
----
-
-## การรันบน Local Development
-
-### วิธีที่ 1: VS Code Live Server (แนะนำ ✅)
-1. ติดตั้ง Extension **"Live Server"** ใน VS Code
-2. คลิกขวาที่ `index.html` → **"Open with Live Server"**
-3. เปิดที่ `http://localhost:5500`
-
-### วิธีที่ 2: npm (Node.js)
-```bash
-npm install
-npm start
-# เปิดที่ http://localhost:3000
-```
-
-### วิธีที่ 3: เปิดไฟล์โดยตรง (file://)
-- ดับเบิลคลิก `index.html` ได้เลย
-- ระบบจะพยายามดึงข้อมูลผ่าน **3 วิธีอัตโนมัติ** (ดูด้านล่าง)
-- หากล้มเหลวทุกวิธี จะแสดง **"ข้อมูลจำลอง"** แทน
+### 3. การใช้งาน Admin
+- คลิกไอคอน 🛡️ (หรือปุ่มจัดการ) เพื่อเข้าสู่ระบบ
+- **เพิ่มสมาชิก:** กรอกข้อมูลและเลือกรูปภาพ ระบบจะจัดการ 2x2 Grid สำหรับรหัสโค้ดต่างๆ ให้โดยอัตโนมัติ
+- **แก้ไขสมาชิก:** ค้นหารายชื่อแล้วกดแก้ไขเพื่อปรับปรุงข้อมูลหรือเปลี่ยนรูปภาพใหม่
 
 ---
 
-## กลไกดึงข้อมูล: 3-Tier Fallback
-
-ระบบจะลองดึงข้อมูลตามลำดับนี้อัตโนมัติ:
-
-```
-1. Apps Script JSONP  ← หลัก (ไม่มี CORS เลย ใช้ได้ทุกที่)
-        ↓ ล้มเหลว
-2. Direct gviz CSV   ← ใช้ได้บน GitHub Pages (Sheet ต้องเปิดสาธารณะ)
-        ↓ ล้มเหลว
-3. allorigins Proxy  ← Last resort สำหรับ local (ขึ้นอยู่กับ proxy)
-        ↓ ล้มเหลวทุกวิธี
-   แสดงข้อมูลจำลอง + Error Banner
-```
+## เทคนิคการค้นหาและกรองข้อมูล
+- **Dropdown รุ่น:** แสดงจำนวนคนในแต่ละรุ่นให้เห็นทันที
+- **ปุ่มบุคคลในครอบครัว:** กรองสมาชิกที่แชร์ `Family_code` เดียวกัน (คู่สมรส) หรือมี `Parent_code` ตรงกับเรา (ลูกๆ)
+- **การพิมพ์ค้นหา:** ระบบจะค้นหาเฉพาะ ชื่อ, ชื่อเล่น, ที่อยู่ และความสัมพันธ์ เพื่อความรวดเร็วและแม่นยำ
 
 ---
 
-## การ Deploy ขึ้น GitHub Pages
-
-```bash
-# Push ไฟล์ทั้งหมด (ยกเว้น Code.gs) ขึ้น GitHub
-git add index.html script.js style.css manifest.json config.json package.json img/
-git commit -m "Deploy Relative-Network"
-git push origin main
-```
-
-จากนั้น:
-1. ไปที่ **Settings** → **Pages**
-2. Source: **Branch `main`** → **`/ (root)`**
-3. คลิก **Save**
-
-เว็บไซต์จะออนไลน์ที่ `https://[username].github.io/[repo-name]/`
-
----
-
-## Admin Dashboard
-
-| ฟังก์ชัน | รายละเอียด |
-|---|---|
-| เข้าสู่ระบบ | กดไอคอน 🛡️ ในเมนู → ใส่รหัสผ่านจาก Sheet `admin` |
-| เพิ่มสมาชิก | กรอกข้อมูล + อัปโหลดรูป (รองรับกล้องมือถือโดยตรง) |
-| แก้ไขข้อมูลสมาชิก | ค้นหาสมาชิกด้วยชื่อ/รหัสรุ่น เพื่อแก้ไขข้อมูลหรือเปลี่ยนรูปภาพ |
-| เพิ่มกิจกรรม | เลือกวันที่จากปฏิทิน + อัปโหลดรูปกิจกรรม |
-| พรีวิวรูปภาพ | ระบบ Live Preview แสดงรูปปัจจุบันและรูปที่เลือกใหม่ก่อนกดบันทึก |
-| การจัดเก็บ | รูปภาพอัปโหลดไปยัง Google Drive อัตโนมัติ ขนาดไม่เกิน 5 MB |
-
----
-
-## การแก้ไขปัญหาเบื้องต้น
-
-**❌ "ไม่สามารถเชื่อมต่อข้อมูลได้"**
-- ตรวจสอบ `SHEET_ID` และ `BACKEND_URL` ใน `script.js`
-- ตรวจสอบว่า Google Sheet แชร์เป็น "Anyone with the link"
-- ตรวจสอบว่า Apps Script Deploy ถูกต้อง (Anyone, Execute as Me)
-
-**❌ อัปโหลดรูปภาพไม่ได้**
-- รัน `runDiagnostics()` ใน Apps Script Editor เพื่อตรวจสอบสิทธิ์
-- ตรวจสอบ `FOLDER_ID` ใน `Code.gs` ว่ายังมีอยู่และมีสิทธิ์เขียน
-
-**❌ Login ไม่ผ่าน**
-- ตรวจสอบว่า Sheet `admin` มีรหัสผ่านใน column แรก แถวที่ 2 เป็นต้นไป
-- หลังแก้ไข `Code.gs` ต้อง **Deploy ใหม่** ทุกครั้ง
-
----
-
-พัฒนาโดย **Tech for Ummah** — Powered by Antigravity AI
+พัฒนาโดยทีมงาน **Tech for Ummah** — ยกระดับการเชื่อมโยงความสัมพันธ์ด้วยเทคโนโลยี
