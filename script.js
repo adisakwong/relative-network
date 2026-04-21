@@ -32,6 +32,7 @@ let adminPassword = ''; // Session storage for current session
 // Filter state
 let activeFamilyCode = '';
 let activeParentCode = '';
+let filterHistory = [];
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -506,20 +507,84 @@ function renderActivities(data) {
 }
 
 // --- SEARCH ---
+function saveFilterState() {
+    const searchInput = document.getElementById('memberSearch');
+    const genFilterSelect = document.getElementById('personGenFilter');
+    
+    if (!searchInput || !genFilterSelect) return;
+
+    const currentState = {
+        search: searchInput.value,
+        gen: genFilterSelect.value,
+        familyCode: activeFamilyCode,
+        parentCode: activeParentCode
+    };
+    
+    // ป้องกันการบันทึกสถานะซ้ำซ้อน
+    if (filterHistory.length > 0) {
+        const last = filterHistory[filterHistory.length - 1];
+        if (last.search === currentState.search && 
+            last.gen === currentState.gen && 
+            last.familyCode === currentState.familyCode && 
+            last.parentCode === currentState.parentCode) {
+            return;
+        }
+    }
+    
+    filterHistory.push(currentState);
+    updateBackButton();
+}
+
+function updateBackButton() {
+    const backBtn = document.getElementById('filterBackButton');
+    if (backBtn) {
+        backBtn.style.display = filterHistory.length > 0 ? 'flex' : 'none';
+    }
+}
+
+function popFilterState() {
+    if (filterHistory.length === 0) return;
+    
+    const prevState = filterHistory.pop();
+    
+    const searchInput = document.getElementById('memberSearch');
+    const genFilterSelect = document.getElementById('personGenFilter');
+    const clearBtn = document.getElementById('clearSearch');
+    
+    if (searchInput) searchInput.value = prevState.search;
+    if (genFilterSelect) genFilterSelect.value = prevState.gen;
+    if (clearBtn) clearBtn.style.display = prevState.search.length > 0 ? 'flex' : 'none';
+    
+    activeFamilyCode = prevState.familyCode;
+    activeParentCode = prevState.parentCode;
+    
+    updateBackButton();
+    applyFilters(true); // pass true to indicate we shouldn't save state again
+
+    // Scroll to members section top so they see the result
+    const membersSection = document.getElementById('members');
+    if (membersSection) {
+        const yOffset = -80;
+        const y = membersSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+}
+
 function initSearch() {
     const searchInput = document.getElementById('memberSearch');
     const clearBtn = document.getElementById('clearSearch');
+    const backBtn = document.getElementById('filterBackButton');
 
     searchInput.addEventListener('input', () => {
         if (clearBtn) {
             clearBtn.style.display = searchInput.value.length > 0 ? 'flex' : 'none';
         }
-        // applyFilters() now handles resetting state if search doesn't match active filter
         applyFilters();
     });
 
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
+            saveFilterState(); // บันทึกสถานะก่อนล้าง
             searchInput.value = '';
             activeFamilyCode = '';
             activeParentCode = '';
@@ -528,16 +593,23 @@ function initSearch() {
         });
     }
 
+    if (backBtn) {
+        backBtn.addEventListener('click', () => {
+            popFilterState();
+        });
+    }
+
     // Dropdown filter listener
     const genFilterSelect = document.getElementById('personGenFilter');
     if (genFilterSelect) {
         genFilterSelect.addEventListener('change', () => {
+            saveFilterState(); // บันทึกสถานะล่าสุดก่อนเปลี่ยน
             applyFilters();
         });
     }
 }
 
-function applyFilters() {
+function applyFilters(isFromHistory = false) {
     const searchInput = document.getElementById('memberSearch');
     const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
     const dropdownGen = document.getElementById('personGenFilter').value;
@@ -585,6 +657,7 @@ function applyFilters() {
 }
 
 function applyFilter(fCode, gCode) {
+    saveFilterState(); // บันทึกสถานะปัจจุบันไว้ก่อนกรองแบบครอบครัว
     activeFamilyCode = fCode ? fCode.trim() : '';
     activeParentCode = gCode ? gCode.trim() : ''; 
 
@@ -605,6 +678,7 @@ function applyFilter(fCode, gCode) {
         }
 
         applyFilters();
+        updateBackButton();
         
         // Scroll to members section
         const membersSection = document.getElementById('members');
