@@ -466,7 +466,7 @@ function renderMembers(data) {
                     <span class="relation-tag"><i class="fas fa-sitemap"></i> ${member.Relation_type}</span>
                     ${member.Family_code ? `
                     <button type="button" class="btn-family-filter ${member.Head_family === '1' ? 'btn-family-dark' : ''}" onclick="applyFilter('${member.Family_code}', '${member.Gener_code}')">
-                        <i class="fas fa-users"></i> บุคคลในครอบครัว
+                        <i class="fas fa-users"></i> ${member.Head_family === '0' ? 'คู่สมรส' : 'บุคคลในครอบครัว'}
                     </button>` : ''}
                 </div>
                 <div class="member-meta">
