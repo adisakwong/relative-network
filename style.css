@@ -187,6 +187,50 @@ body {
     background: var(--secondary-color);
 }
 
+.btn-back {
+    background: var(--secondary-color);
+    color: var(--text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0 1.5rem;
+    border-radius: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8.4px;
+    font-size: 0.95rem;
+    height: 50.4px;
+}
+
+.btn-back:hover {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+    transform: translateY(-4px); /* Changed from translateX to translateY for bottom position */
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.btn-bottom {
+    margin: 3rem auto 0;
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 50px;
+    padding: 0.75rem 2.5rem;
+    height: auto;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+}
+
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.btn-back i {
+    font-size: 0.85rem;
+}
+
 .hero-visual {
     display: flex;
     justify-content: center;
