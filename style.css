@@ -76,7 +76,14 @@ body {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-primary);
+    transition: var(--transition);
 }
+
+.logo:hover {
+    transform: scale(1.02);
+    opacity: 0.9;
+}
+
 
 .logo i {
     color: var(--accent-color);
@@ -96,7 +103,11 @@ body {
     transition: var(--transition);
     position: relative;
     padding: 5px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
+
 
 .nav-links a:hover, .nav-links a.active {
     color: var(--accent-color);

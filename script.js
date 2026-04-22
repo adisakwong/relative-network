@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initMobileMenu();
     initScrollEffects();
     initBackToTop();
+    initHomeButton();
 
     // Check if SHEET_ID is set
     if (SHEET_ID === 'YOUR_GOOGLE_SHEET_ID_HERE') {
@@ -126,6 +127,58 @@ function initBackToTop() {
         });
     });
 }
+
+// --- HOME BUTTON LOGIC ---
+function initHomeButton() {
+    const homeNavLink = document.getElementById('homeNavLink');
+    const logoLink = document.querySelector('.logo');
+
+    if (homeNavLink) {
+        homeNavLink.addEventListener('click', (e) => {
+            // เราอนุญาตให้ anchor เลื่อนไปที่ #home ตามปกติ
+            // แต่ให้ทำการล้าง filter ด้วย
+            resetAllFilters();
+        });
+    }
+
+    // เพิ่มให้ Logo ทำหน้าที่เดียวกันด้วย (ถ้าจำเป็น)
+    if (logoLink) {
+        logoLink.style.cursor = 'pointer';
+        logoLink.addEventListener('click', () => {
+            resetAllFilters();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+}
+
+function resetAllFilters() {
+    console.log('[resetAllFilters] Resetting everything...');
+    
+    const searchInput = document.getElementById('memberSearch');
+    const genFilterSelect = document.getElementById('personGenFilter');
+    const clearBtn = document.getElementById('clearSearch');
+    
+    // 1. ลบข้อความในช่องค้นหา
+    if (searchInput) searchInput.value = '';
+    
+    // 2. personGenFilter อยู่ที่ "ทั้งหมด"
+    if (genFilterSelect) genFilterSelect.value = '';
+    
+    // 3. ฮึด icon ล้างค่าค้นหา
+    if (clearBtn) clearBtn.style.display = 'none';
+
+    // 4. ล้างค่า filter พิเศษ (Family/Parent)
+    activeFamilyCode = '';
+    activeParentCode = '';
+    
+    // 5. ล้างประวัติการย้อนกลับ
+    filterHistory = [];
+    updateBackButton();
+    
+    // 6. ประมวลผลการกรองใหม่
+    applyFilters();
+}
+
 
 // --- DATA FETCHING ---
 /**
